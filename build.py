@@ -10,6 +10,9 @@ Description: This compiles all of the code into a standalone application.
 import PyInstaller.__main__
 import os, shutil
 
+if os.path.isdir('dist'):
+    shutil.rmtree('dist')
+
 PyInstaller.__main__.run([
     'application.py',
     '--onefile',
