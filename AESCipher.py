@@ -2,18 +2,18 @@
 """
 AESCipher.py
 By Ronald Kemker
-14 Jun 2021
+18 Jun 2021
 
 Description: Runs AES-256 encryption
 
 """
 
+import os, base64, time, struct, binascii
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
 from cryptography.hazmat.primitives.ciphers.modes import CBC
 from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.hmac import HMAC, hashes
 from cryptography.hazmat.primitives.padding import PKCS7
-import os, base64, time, struct, binascii
 from cryptography.exceptions import InvalidSignature
 from cryptography import utils
 
@@ -37,9 +37,9 @@ class AESCipher(object):
         Attributes
         ----------
         block_size : int (default=32)
-           Description 
+           The number of bits in each block 
         _MAX_CLOCK_SKEW : int (default=60)
-           Description 
+           The max time the message can be validated in (not implemented)
            
     
         Returns
@@ -51,6 +51,16 @@ class AESCipher(object):
         self._MAX_CLOCK_SKEW = 60
             
     def generate_key(self):
+        '''
+        Generates a random 256-bit key (for encryption, signing, and 
+        initialization)     
+        
+        Returns
+        -------
+        key : byte string
+            The randomly generated key
+
+        '''
         return os.urandom(self.block_size)
         
     def encrypt(self, msg, key, signing_key):
@@ -149,22 +159,30 @@ class AESCipher(object):
         
         Parameters
         ----------
-        ciphertext : TYPE
-            DESCRIPTION.
-        key : TYPE
-            DESCRIPTION.
-        signing_key : TYPE
-            DESCRIPTION.
+        ciphertext : byte string
+            The encrypted message
+        key : byte-string
+            encryption key.
+        signing_key : byte_string
+            authentication key.
         ttl : TYPE, optional
-            DESCRIPTION. The default is None.
+            The "time-to-live" for a given message.  
+            TODO: This needs to be intergrated somehow with the current app
 
         Returns
         -------
-        None.
+        deciphertext : byte string
+            The decrypted and unpadded message
         
         Raises
         ------
-        InvalidToken Exception : raises if token has expired
+        InvalidToken Exception : 
+            raises if any part of the decrpytion process is interrupted, 
+            including: 
+                - ttl has expired
+                - Message is not authentic
+                - Error with decryption
+                - Error with unpadding
 
         '''
         
@@ -178,10 +196,11 @@ class AESCipher(object):
         if ttl is not None:
             if timestamp + ttl < current_time:
                 raise InvalidToken
-            
-        # If message took longer than _MAX_CLOCK_SKEW seconds to arrive
-        if current_time + self._MAX_CLOCK_SKEW < timestamp:
-            raise InvalidToken
+
+        # TODO: Consider re-adding this if it makes sense            
+        # # If message took longer than _MAX_CLOCK_SKEW seconds to arrive
+        # if current_time + self._MAX_CLOCK_SKEW < timestamp:
+        #     raise InvalidToken
 
         # SHA-256 is a cryptographic hash function from the SHA-2 family and 
         # is standardized by NIST. It produces a 256-bit message digest.
@@ -215,12 +234,15 @@ class AESCipher(object):
         # It is considered cryptographically strong.
         cbc = CBC(iv)
 
+        # AES decryption using CBC mode
         decryptor = Cipher(aes, cbc).decryptor()
         plaintext_padded = decryptor.update(ciphertext)
         try:
             plaintext_padded += decryptor.finalize()
         except ValueError:
             raise InvalidToken
+        
+        # Unpadding the plain text
         unpadder = PKCS7(self.block_size * 8).unpadder()
 
         unpadded = unpadder.update(plaintext_padded)
@@ -232,6 +254,28 @@ class AESCipher(object):
 
 
     def _get_unverified_token_data(self, token):
+        '''
+        This breaks up the ciphertext into timestamp and "other" data for
+        validating against ttl
+
+        Parameters
+        ----------
+        token : byte-string
+            This it the raw ciphertext data
+
+        Raises
+        ------
+        InvalidToken
+            If not properly formatted
+
+        Returns
+        -------
+        timestamp : byte-string
+            Time that the message was encrypted.
+        data : byte-string
+            The initialization_vector, ciphertext, and signature key (in order) 
+
+        '''
         utils._check_bytes("token", token)
         try:
             data = base64.urlsafe_b64decode(token)
@@ -249,6 +293,9 @@ class AESCipher(object):
 
 if __name__ == "__main__":
 
+    '''
+    Toy Example
+    '''    
     msg = b'My wife is amazing!!!'
 
     cipher = AESCipher()
