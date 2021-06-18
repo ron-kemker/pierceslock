@@ -49,7 +49,7 @@ class Application(object):
         
         # Initialize Window
         self.window = tk.Tk()
-        self.window.title("Pierces Lock 0.1")  # to define the title
+        self.window.title("Pierce's Lock 0.1")  # to define the title
         self.window.geometry("%dx%d" % (self.window_width, 
                                         self.window_height))        
         
@@ -99,7 +99,7 @@ class Application(object):
         
         
         label = Label(self.background_frame, 
-                      text='Pierces Lock', 
+                      text='Pierce''s Lock', 
                       font=('Helvetica', 18,'bold'))
         label.place(x=50, y=49, width=300, height=50)
         
