@@ -1,0 +1,14 @@
+Pierce's Lock
+Version %s
+By Ronald Kemker
+
+Originally Posted: 18 Jun 2021
+Last Updated: %s
+
+Description:
+This freeware application can encrypt/decrypt any file using the AES-256 standard.
+
+Disclaimer: 
+I am not a cybersecurity expert.  I enjoy programming and learning new things.  I do not guarantee that this software is perfect or secure, and I actually welcome any feedback on how to improve the application.
+
+
