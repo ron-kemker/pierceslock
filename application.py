@@ -99,7 +99,7 @@ class Application(object):
         
         
         label = Label(self.background_frame, 
-                      text='Pierce''s Lock', 
+                      text='Pierce\'s Lock', 
                       font=('Helvetica', 18,'bold'))
         label.place(x=50, y=49, width=300, height=50)
         
