@@ -22,8 +22,9 @@ By [Ronald Kemker](https://www.linkedin.com/in/ronald-kemker-66250b115)
 Follow the [project milestones](https://github.com/ron-kemker/pierceslock/milestones) page to keep track of my plans going forward.
 
 ## Release History
-
 Version : 0.1
+
 Date : 18 Jun 2021
+
 Description: Baseline application.  Can encrypt/decrypt files and generate/manage encryption keys.
 
