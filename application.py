@@ -44,7 +44,7 @@ class Application(object):
         self.window_height = 400
         self.window_width = 400
         self.key_dir = 'keys'
-        self.version = "0.1"
+        self.version = "0.1.0"
         self.last_update = '18 Jun 2021'
         
         # Initialize Window
@@ -149,7 +149,6 @@ class Application(object):
                            command=popup_window.destroy)
         button1.place(x=100, y=450, width=100, height=30 )        
         
-
     
     def encryption_window(self):
         
