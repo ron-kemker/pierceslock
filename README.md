@@ -1,5 +1,5 @@
 # Pierce's Lock
-A freeware graphical user interface (GUI) based application that can encrypt and decrypt any file with the AES-256 standard.
+A freeware graphical user interface (GUI) based application that can encrypt and decrypt any file with the [AES-256 standard](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard).
  
 By [Ronald Kemker](https://www.linkedin.com/in/ronald-kemker-66250b115)
 
@@ -8,7 +8,7 @@ By [Ronald Kemker](https://www.linkedin.com/in/ronald-kemker-66250b115)
 - Manage Encryption Keys
 
 ## Instructions
-Run application.py.
+Run [application.py](https://github.com/ron-kemker/pierceslock/blob/main/application.py) and the GUI app should load.
 
 ## Library Dependencies
 - [pyca/cryptography](https://cryptography.io/en/latest/)
