@@ -11,7 +11,8 @@ By [Ronald Kemker](https://www.linkedin.com/in/ronald-kemker-66250b115)
 - Manages Encryption Keys
 
 ## Instructions
-Run [application.py](https://github.com/ron-kemker/pierceslock/blob/main/application.py) and the GUI app should load.
+- Run ```python application.py``` and the GUI app should load.
+- Run ```python build.py``` to compile a stand-alone application.  Executable will be located in ```\dist``` after build.
 
 ## Library Dependencies
 See [dependencies graph](https://github.com/ron-kemker/pierceslock/network/dependencies).
