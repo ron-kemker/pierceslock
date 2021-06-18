@@ -339,9 +339,14 @@ class Application(object):
                                              key, 
                                              signing_key)
             
+            file_ext = self.filepath.split('.')[-1].upper()
+
             if savepath[-4:] != '.cmf':
-                savepath = savepath + '.cmf'
-            
+                savepath = savepath+'_'+ file_ext + '.cmf'
+                
+            else:
+                savepath = savepath[:-4] + '_' + file_ext + '.cmf'
+                
             with open(savepath , "wb") as f:
                 f.write(signing_key + ciphertext)
        
@@ -580,7 +585,8 @@ class Application(object):
             
             deciphertext = cipher.decrypt(ciphertext, key, signing_key)
             
-            with open(savepath, 'wb') as f:
+            file_ext = self.filepath.split('_')[-1].split('.')[0].lower()
+            with open(savepath + '.' + file_ext, 'wb') as f:
                 f.write(deciphertext)
             
             self.popup_window = tk.Toplevel()
