@@ -1,3 +1,4 @@
 cryptography==3.3.1
 python==3.8.5
 pillow==8.0.1
+pyinstaller==3.6
