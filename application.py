@@ -38,7 +38,6 @@ class Application(object):
            The Date that the last update took place
         window :Tkinter object
            The main application window  
-
         '''
         
         self.window_height = 400
@@ -81,7 +80,19 @@ class Application(object):
         self.window.mainloop()
 
     def draw_menu(self):
-            
+        '''
+        Draws the main menu (default view)
+
+        Attributes
+        ----------
+        window_height : int 
+           Pixel height of base application 
+        window_width : int 
+           Pixel width of base application 
+        background_frame :Tkinter Frame object
+           The space to draw the app content 
+
+        '''    
         self.window_height = 400
         self.window_width = 400
         self.window.geometry("%dx%d" % (self.window_width, 
@@ -123,8 +134,39 @@ class Application(object):
                          command=self.quit_prompt)
         button4.place(x=150, y=253, width=100, height=50)
 
-    def about_window(self):
+    def quit_prompt(self):
+        '''
+        Helper function for draw_menu function.  Displays a prompt to quit the
+        application.
+        '''        
+        popup_window = tk.Toplevel()
+        popup_window.geometry("300x100") 
+        popup_window.wm_title("Quit?")
         
+        # Background of the popup window
+        bkgd_frame = Frame(popup_window, width=300, height=100)
+        bkgd_frame.pack()
+        
+        # Label that displays the prompt
+        prompt_txt = "Are you sure you want to quit?"
+        prompt = Label(bkgd_frame, text=prompt_txt)
+        prompt.place(x=50, y=20, width=200)
+        
+        # Buttons to save and quit, just quit, and cancel the "quit" 
+        # command
+        button1 = Button(bkgd_frame, text="Quit", 
+                           command=self.window.destroy)
+        button1.place(x=49, y=50, width=100, height=30 )        
+        
+        cancel_button = Button(bkgd_frame, text="Cancel", 
+                               command=popup_window.destroy)
+        cancel_button.place(x=151, y=50, width=100, height=30)
+
+    def about_window(self):
+        '''
+        Pop-up window with brief description of the application.
+
+        '''
         popup_window = tk.Toplevel()
         popup_window.geometry("300x500") 
         popup_window.wm_title("About")
@@ -151,6 +193,26 @@ class Application(object):
         
     
     def encryption_window(self):
+        '''
+        Loads the encryption menu in the application
+
+        Attributes
+        ----------
+        window_height : int 
+           Pixel height of base application 
+        window_width : int 
+           Pixel width of base application 
+        filepath : string
+            The location of the file to be encrypted
+        keyfile : string
+            The location of the encryption key to be used
+        background_frame :Tkinter Frame object
+           The space to draw the app content 
+        label_status_1 : tkinter Label object
+            The label for the status for step 1, i.e., select file to encrypt
+        label_status_2 : tkinter Label object
+            The label for the status for step 2, i.e., select key file
+        '''
         
         self.window_height = 400
         self.window_width = 801
@@ -244,9 +306,156 @@ class Application(object):
                              command=self.draw_menu)
         
         button.place(x=5, y=self.window_height - 35, width=150, height=30)
+
+    def encrypt(self):
+        '''
+        Helper function for encryption_window.  This function uses 
+        AESCipher.py to encrypt the file.
+        
+        Attributes
+        ----------
+        popup_window : tkinter TopLevel object 
+           This popup window is the prompt once encryption is complete
+              
+        '''
+        
+        if self.filepath and self.keypath:
+            
+            savepath = asksaveasfilename(filetypes=(("CMF File", 
+                                                         ['.cmf']),),
+                                             initialdir = '', 
+                                             title = "Save encrypted file")
+            
+            if not savepath:
+                return
+            
+            cipher = AESCipher()
+            
+            with open(self.keypath, "rb") as f:
+                key = f.read()
+            
+            signing_key = cipher.generate_key()
+            ciphertext = cipher.encrypt_file(self.filepath, 
+                                             key, 
+                                             signing_key)
+            
+            if savepath[-4:] != '.cmf':
+                savepath = savepath + '.cmf'
+            
+            with open(savepath , "wb") as f:
+                f.write(signing_key + ciphertext)
+       
+            self.popup_window = tk.Toplevel()
+            self.popup_window.geometry("300x100") 
+            self.popup_window.wm_title("Encryption Successful")
+            
+            # Background of the popup window
+            bkgd_frame = Frame(self.popup_window, width=300, height=100)
+            bkgd_frame.pack()
+            
+            # Label that displays the prompt
+            prompt_txt = "Encryption successful.  Encrypt another file?"
+            prompt = Label(bkgd_frame, text=prompt_txt)
+            prompt.place(x=25, y=20, width=250)
+            
+            # Buttons to save and quit, just quit, and cancel the "quit" 
+            # command
+            button = Button(bkgd_frame, text="Yes", 
+                               command=self.encryption_window)
+            button.place(x=49, y=50, width=100, height=30 )        
+            
+            button = Button(bkgd_frame, text="No", 
+                                   command=self.draw_menu)
+            button.place(x=151, y=50, width=100, height=30)
+
+    def find_file(self):
+        '''
+        Helper function for encryption_window.  This function finds the file 
+        (Step 1) to be encrypted.  If a file is selected, it changes the 
+        label_status_1 to a green check mark.
+        
+        Attributes
+        ----------
+        filepath : string 
+           This is the path to the file that will be encrypted.
+        label_status_1 : tkinter Label object
+            The label for the status for step 1, i.e., select file to encrypt           
+        '''
+        
+        self.filepath = askopenfilename(initialdir = '', 
+                                title = "Select file")
+        
+        if self.filepath:
+            col2 = int(self.window_width / 3)
+
+            img = Image.open('img/green_check.png')
+            img = ImageTk.PhotoImage(img.resize((col2-100, col2-100), 
+                                                Image.ANTIALIAS))
+            
+            self.label_status_1.destroy()
+            self.label_status_1 = Label(self.background_frame,
+                                        image=img)
+            self.label_status_1.img = img
+            self.label_status_1.place(x=50, 
+                                  y=150, 
+                                  width=col2-100, 
+                                  height=col2-100)
+            
+    def find_key(self):
+        '''
+        Helper function for encryption_ and decryption_window.  This function 
+        finds the .key file (Step 2) to be used.  If a file is selected, it 
+        changes the label_status_2 to a green check mark.
+        
+        Attributes
+        ----------
+        keypath : string 
+           This is the path to the key file
+        label_status_2 : tkinter Label object
+           The label for the status for step 2, i.e., select key file
+        '''
+        
+        self.keypath = askopenfilename(filetypes=(("KEY File", ['.key']),),
+                                initialdir = self.key_dir, 
+                                title = "Select encrpytion key")
+
+        if self.keypath:
+            col2 = int(self.window_width / 3)
+
+            img = Image.open('img/green_check.png')
+            img = ImageTk.PhotoImage(img.resize((col2-100, col2-100), 
+                                                Image.ANTIALIAS))
+            
+            self.label_status_2.destroy()
+            self.label_status_2 = Label(self.background_frame,
+                                        image=img)
+            self.label_status_2.img = img
+            self.label_status_2.place(x=col2+50, 
+                                  y=150, 
+                                  width=col2-100, 
+                                  height=col2-100)
     
     def decryption_window(self):
-        
+        '''
+        Loads the decryption menu in the application
+
+        Attributes
+        ----------
+        window_height : int 
+           Pixel height of base application 
+        window_width : int 
+           Pixel width of base application 
+        filepath : string
+            The location of the file to be decrypted
+        keyfile : string
+            The location of the decryption key to be used
+        background_frame : Tkinter Frame object
+           The space to draw the app content 
+        label_status_1 : tkinter Label object
+            The label for the status for step 1, i.e., select file to decrypt
+        label_status_2 : tkinter Label object
+            The label for the status for step 2, i.e., select key file
+        '''        
         self.window_height = 400
         self.window_width = 801
         self.filepath = None
@@ -340,8 +549,113 @@ class Application(object):
         
         button.place(x=5, y=self.window_height - 35, width=150, height=30)  
         
+    def decrypt(self):
+        '''
+        Helper function for decryption_window.  This function uses AESCipher.py
+        to decrypt the file.
+        
+        Attributes
+        ----------
+        popup_window : tkinter TopLevel object 
+           This popup window is the prompt once decryption is complete
+              
+        '''
+        if self.filepath and self.keypath:
+            
+            savepath = asksaveasfilename(initialdir = '', 
+                                             title = "Save decrypted file")
+            
+            if not savepath:
+                return
+            
+            cipher = AESCipher()
+            
+            with open(self.keypath, "rb") as f:
+                key = f.read()
+            
+            with open(self.filepath , "rb") as f:
+                msg = f.read()
+                signing_key = msg[:cipher.block_size]
+                ciphertext = msg[cipher.block_size:]
+            
+            deciphertext = cipher.decrypt(ciphertext, key, signing_key)
+            
+            with open(savepath, 'wb') as f:
+                f.write(deciphertext)
+            
+            self.popup_window = tk.Toplevel()
+            self.popup_window.geometry("300x100") 
+            self.popup_window.wm_title("Decryption Successful")
+            
+            # Background of the popup window
+            bkgd_frame = Frame(self.popup_window, width=300, height=100)
+            bkgd_frame.pack()
+            
+            # Label that displays the prompt
+            prompt_txt = "Decryption successful.  Decrypt another file?"
+            prompt = Label(bkgd_frame, text=prompt_txt)
+            prompt.place(x=25, y=20, width=250)
+            
+            # Buttons to save and quit, just quit, and cancel the "quit" 
+            # command
+            button = Button(bkgd_frame, text="Yes", 
+                               command=self.encryption_window)
+            button.place(x=49, y=50, width=100, height=30 )        
+            
+            button = Button(bkgd_frame, text="No", 
+                                   command=self.draw_menu)
+            button.place(x=151, y=50, width=100, height=30)    
+
+    def find_cmf_file(self):
+        '''
+        Helper function for decryption_menu.  This function finds the .cmf file 
+        (Step 1) to be decrypted.  If a file is selected, it changes the 
+        label_status_1 to a green check mark.
+        
+        Attributes
+        ----------
+        filepath : string 
+           This is the path to the file that will be decrypted.
+        label_status_1 : tkinter Label object
+           The label for the status for step 1, i.e., select file to decrypt
+        '''
+        self.filepath = askopenfilename(filetypes=(("CMF File", ['.cmf']),),
+                                        initialdir = '', 
+                                title = "Select file")
+        
+        if self.filepath:
+            col2 = int(self.window_width / 3)
+
+            img = Image.open('img/green_check.png')
+            img = ImageTk.PhotoImage(img.resize((col2-100, col2-100), 
+                                                Image.ANTIALIAS))
+            
+            self.label_status_1.destroy()
+            self.label_status_1 = Label(self.background_frame,
+                                        image=img)
+            self.label_status_1.img = img
+            self.label_status_1.place(x=50, 
+                                  y=150, 
+                                  width=col2-100, 
+                                  height=col2-100)
         
     def key_manager_window(self):
+        '''
+        Opens the key management window in the application
+
+        Attributes
+        ----------
+        window_height : int 
+           Pixel height of base application 
+        window_width : int 
+           Pixel width of base application 
+        background_frame : Tkinter Frame object
+           The space to draw the app content
+        left_pane : tkinter Frame object
+           The frame that shows the list of keys in the directory of choice
+        key_var : tkinter StringVar object
+            The variable that contains what is present in the entry text box
+        '''
         self.window_height = 600
         self.window_width = 600
         self.window.geometry("%dx%d" % (self.window_width, 
@@ -415,6 +729,15 @@ class Application(object):
 
 
     def select_key(self, event):
+        '''
+        Helper function for key_manager_window.  This read and prints the 
+        key of the .key file selected in the left_pane.
+
+        Parameters
+        ----------
+        event : tkinter event object
+            This contains the listener object for the key manager's left_pane
+        '''
         ii = self.left_pane.curselection()
         filename = self.left_pane.get(ii)
         
@@ -425,6 +748,10 @@ class Application(object):
 
 
     def add_key(self):
+        '''
+        Helper function for key_manager_window.  This creates a new .key file
+        for the key typed or generated in the Entry box.
+        '''
         savepath = asksaveasfilename(filetypes=(("KEY File", ['.key']),),
                                              initialdir = '', 
                                              title = "Save key")
@@ -438,206 +765,38 @@ class Application(object):
         self.key_manager_window()
 
     def generate_key(self):
+        '''
+        Helper function for key_manager_window.  This generates a new random
+        encryption key.
+        
+        Attributes
+        ----------
+        new_key : byte string 
+           The new random key being generated
+        '''
         cipher = AESCipher()
         self.new_key = cipher.generate_key()
         self.key_var.set(base64.urlsafe_b64encode(self.new_key))
 
     def change_key_dir(self):
+        '''
+        Helper function for key_manager_window.  This opens a browse window 
+        to select a new key directory to display.
+        
+        Attributes
+        ----------
+        key_dir : string 
+           This is the path to the key directory.
+        '''
+        
         new_key_dir = askdirectory(initialdir = self.key_dir, 
                                     title = "Change Key Directory")
         
         if new_key_dir:
             self.key_dir = new_key_dir
             self.key_manager_window()
-       
-        
-        
-    def quit_prompt(self):
-        popup_window = tk.Toplevel()
-        popup_window.geometry("300x100") 
-        popup_window.wm_title("Quit?")
-        
-        # Background of the popup window
-        bkgd_frame = Frame(popup_window, width=300, height=100)
-        bkgd_frame.pack()
-        
-        # Label that displays the prompt
-        prompt_txt = "Are you sure you want to quit?"
-        prompt = Label(bkgd_frame, text=prompt_txt)
-        prompt.place(x=50, y=20, width=200)
-        
-        # Buttons to save and quit, just quit, and cancel the "quit" 
-        # command
-        button1 = Button(bkgd_frame, text="Quit", 
-                           command=self.window.destroy)
-        button1.place(x=49, y=50, width=100, height=30 )        
-        
-        cancel_button = Button(bkgd_frame, text="Cancel", 
-                               command=popup_window.destroy)
-        cancel_button.place(x=151, y=50, width=100, height=30)  
-
-
-    def find_file(self):
-        self.filepath = askopenfilename(initialdir = '', 
-                                title = "Select file")
-        
-        if self.filepath:
-            col2 = int(self.window_width / 3)
-
-            img = Image.open('img/green_check.png')
-            img = ImageTk.PhotoImage(img.resize((col2-100, col2-100), 
-                                                Image.ANTIALIAS))
-            
-            self.label_status_1.destroy()
-            self.label_status_1 = Label(self.background_frame,
-                                        image=img)
-            self.label_status_1.img = img
-            self.label_status_1.place(x=50, 
-                                  y=150, 
-                                  width=col2-100, 
-                                  height=col2-100)
-
-    def find_cmf_file(self):
-        self.filepath = askopenfilename(filetypes=(("CMF File", ['.cmf']),),
-                                        initialdir = '', 
-                                title = "Select file")
-        
-        if self.filepath:
-            col2 = int(self.window_width / 3)
-
-            img = Image.open('img/green_check.png')
-            img = ImageTk.PhotoImage(img.resize((col2-100, col2-100), 
-                                                Image.ANTIALIAS))
-            
-            self.label_status_1.destroy()
-            self.label_status_1 = Label(self.background_frame,
-                                        image=img)
-            self.label_status_1.img = img
-            self.label_status_1.place(x=50, 
-                                  y=150, 
-                                  width=col2-100, 
-                                  height=col2-100)
-
-    def find_key(self):
-        self.keypath = askopenfilename(filetypes=(("KEY File", ['.key']),),
-                                initialdir = self.key_dir, 
-                                title = "Select encrpytion key")
-
-        if self.keypath:
-            col2 = int(self.window_width / 3)
-
-            img = Image.open('img/green_check.png')
-            img = ImageTk.PhotoImage(img.resize((col2-100, col2-100), 
-                                                Image.ANTIALIAS))
-            
-            self.label_status_2.destroy()
-            self.label_status_2 = Label(self.background_frame,
-                                        image=img)
-            self.label_status_2.img = img
-            self.label_status_2.place(x=col2+50, 
-                                  y=150, 
-                                  width=col2-100, 
-                                  height=col2-100)
-
-
-    def encrypt(self):
-        if self.filepath and self.keypath:
-            
-            savepath = asksaveasfilename(filetypes=(("CMF File", 
-                                                         ['.cmf']),),
-                                             initialdir = '', 
-                                             title = "Save encrypted file")
-            
-            if not savepath:
-                return
-            
-            cipher = AESCipher()
-            
-            with open(self.keypath, "rb") as f:
-                key = f.read()
-            
-            signing_key = cipher.generate_key()
-            ciphertext = cipher.encrypt_file(self.filepath, 
-                                             key, 
-                                             signing_key)
-            
-            if savepath[-4:] != '.cmf':
-                savepath = savepath + '.cmf'
-            
-            with open(savepath , "wb") as f:
-                f.write(signing_key + ciphertext)
-       
-            self.popup_window = tk.Toplevel()
-            self.popup_window.geometry("300x100") 
-            self.popup_window.wm_title("Encryption Successful")
-            
-            # Background of the popup window
-            bkgd_frame = Frame(self.popup_window, width=300, height=100)
-            bkgd_frame.pack()
-            
-            # Label that displays the prompt
-            prompt_txt = "Encryption successful.  Encrypt another file?"
-            prompt = Label(bkgd_frame, text=prompt_txt)
-            prompt.place(x=25, y=20, width=250)
-            
-            # Buttons to save and quit, just quit, and cancel the "quit" 
-            # command
-            button = Button(bkgd_frame, text="Yes", 
-                               command=self.encryption_window)
-            button.place(x=49, y=50, width=100, height=30 )        
-            
-            button = Button(bkgd_frame, text="No", 
-                                   command=self.draw_menu)
-            button.place(x=151, y=50, width=100, height=30)  
-
-    def decrypt(self):
-        if self.filepath and self.keypath:
-            
-            savepath = asksaveasfilename(initialdir = '', 
-                                             title = "Save decrypted file")
-            
-            if not savepath:
-                return
-            
-            cipher = AESCipher()
-            
-            with open(self.keypath, "rb") as f:
-                key = f.read()
-            
-            with open(self.filepath , "rb") as f:
-                msg = f.read()
-                signing_key = msg[:cipher.block_size]
-                ciphertext = msg[cipher.block_size:]
-            
-            deciphertext = cipher.decrypt(ciphertext, key, signing_key)
-            
-            with open(savepath, 'wb') as f:
-                f.write(deciphertext)
-            
-            self.popup_window = tk.Toplevel()
-            self.popup_window.geometry("300x100") 
-            self.popup_window.wm_title("Decryption Successful")
-            
-            # Background of the popup window
-            bkgd_frame = Frame(self.popup_window, width=300, height=100)
-            bkgd_frame.pack()
-            
-            # Label that displays the prompt
-            prompt_txt = "Decryption successful.  Decrypt another file?"
-            prompt = Label(bkgd_frame, text=prompt_txt)
-            prompt.place(x=25, y=20, width=250)
-            
-            # Buttons to save and quit, just quit, and cancel the "quit" 
-            # command
-            button = Button(bkgd_frame, text="Yes", 
-                               command=self.encryption_window)
-            button.place(x=49, y=50, width=100, height=30 )        
-            
-            button = Button(bkgd_frame, text="No", 
-                                   command=self.draw_menu)
-            button.place(x=151, y=50, width=100, height=30)    
-            
+      
 if __name__ == "__main__":
-    app = Application()                
+    Application()                
 
   
