@@ -11,15 +11,7 @@ By [Ronald Kemker](https://www.linkedin.com/in/ronald-kemker-66250b115)
 Run [application.py](https://github.com/ron-kemker/pierceslock/blob/main/application.py) and the GUI app should load.
 
 ## Library Dependencies
-- [pyca/cryptography](https://cryptography.io/en/latest/)
-- [tkinter](https://docs.python.org/3/library/tkinter.html)
-- [Pillow (PIL)](https://python-pillow.org/)
-- [glob](https://docs.python.org/3/library/glob.html)
-- [base64](https://docs.python.org/3/library/base64.html)
-- [os](https://docs.python.org/3/library/os.html)
-- [time](https://docs.python.org/3/library/time.html)
-- [struct](https://docs.python.org/3/library/struct.html)
-- [binascii](https://docs.python.org/3/library/binascii.html)
+See [dependencies graph](https://github.com/ron-kemker/pierceslock/network/dependencies).
 
 ## Future Work
 Follow the [project milestones](https://github.com/ron-kemker/pierceslock/milestones) page to keep track of my plans going forward.
