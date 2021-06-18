@@ -7,6 +7,9 @@ By [Ronald Kemker](https://www.linkedin.com/in/ronald-kemker-66250b115)
 - Encrypts and decrypts any file with AES-256
 - Manage Encryption Keys
 
+## Instructions
+Run application.py.
+
 ## Library Dependencies
 - [pyca/cryptography](https://cryptography.io/en/latest/)
 - [tkinter](https://docs.python.org/3/library/tkinter.html)
