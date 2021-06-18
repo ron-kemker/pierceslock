@@ -2,37 +2,58 @@
 """
 application.py
 By Ronald Kemker
-14 Jun 2021
+18 Jun 2021
 
 Description: This is the main GUI application for the "Pierce's Lock" 
              Encryption/Decryption Software.
 
 """
 
+import glob, base64
 import tkinter as tk
 from tkinter import Frame, Button, Label, Menu, Entry, StringVar, Listbox, \
     Scrollbar
 from tkinter.filedialog import askopenfilename,asksaveasfilename,askdirectory
 from PIL import ImageTk, Image
-import glob, base64
 
 from AESCipher import AESCipher
 
 class Application(object):
     
     def __init__(self):
+        '''
+        The GUI application for Pierce's Lock
 
+        Attributes
+        ----------
+        window_height : int 
+           Pixel height of base application 
+        window_width : int 
+           Pixel width of base application 
+        key_dir : string ('keys/')
+           The directory location where the .key files are stored
+        version : string 
+           The version number of the current software
+        last_update : string
+           The Date that the last update took place
+        window :Tkinter object
+           The main application window  
+
+        '''
+        
         self.window_height = 400
         self.window_width = 400
         self.key_dir = 'keys'
         self.version = "0.1"
         self.last_update = '18 Jun 2021'
         
+        # Initialize Window
         self.window = tk.Tk()
         self.window.title("Pierces Lock 0.1")  # to define the title
         self.window.geometry("%dx%d" % (self.window_width, 
                                         self.window_height))        
         
+        # Build the menu
         menu = Menu(self.window)
         self.window.config(menu=menu)
         
@@ -53,7 +74,10 @@ class Application(object):
         menu.add_cascade(label='Help', menu=helpMenu)
         helpMenu.add_command(label='About', command=self.about_window)
         
+        # Draw the menu
         self.draw_menu()
+        
+        # Run the application till closed
         self.window.mainloop()
 
     def draw_menu(self):
@@ -614,8 +638,6 @@ class Application(object):
                                    command=self.draw_menu)
             button.place(x=151, y=50, width=100, height=30)    
             
-
-
 if __name__ == "__main__":
     app = Application()                
 
