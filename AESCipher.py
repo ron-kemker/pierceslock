@@ -124,28 +124,31 @@ class AESCipher(object):
         
         return ciphertext, iv
         
-    def encode_authentication(self, ciphertext, iv, signing_key):
+    def encode_authentication(self, ciphertext, iv, signing_key=None):
         '''
         Perform SHA-256 Hash-based Message Authentication on the ciphertext
 
         Parameters
         ----------
         ciphertext : bytes string
-            DESCRIPTION.
+            The encrypted message
         iv : bytes string
-            DESCRIPTION.
-        signing_key : byte string
-            authentication key.
+            The initialization vector
+        signing_key : byte string, optional
+            authentication key. (Default=None)
 
         Returns
         -------
         bytes-string
-            Ciphertext with authentication code
+            The authentication time, iv, ciphertext, and authentication key
 
         '''
         # Record time for message authentication
         current_time = int(time.time())    
-    
+
+        if not signing_key:
+            signing_key = self.generate_key()
+
         # Pack the current time, initialization vector, and ciphertext
         basic_parts = (
             b"\x80" + struct.pack(">Q", current_time) + iv + ciphertext
@@ -161,7 +164,7 @@ class AESCipher(object):
         h = HMAC(signing_key, crypto_hash)
         h.update(basic_parts) # bytes to hash and authenticate
         hmac = h.finalize() # finalize current context, return msg as bytes        
-        return base64.urlsafe_b64encode(basic_parts + hmac)
+        return base64.urlsafe_b64encode(basic_parts + hmac), signing_key
 
     def encrypt_file(self, file_path, key, signing_key):
         
@@ -172,7 +175,7 @@ class AESCipher(object):
         encoded = self.encode_authentication(ciphertext, iv)
         return encoded
             
-    def decrypt(self, ciphertext, key, iv, ttl=None):
+    def decrypt(self, ciphertext, key, iv):
         '''
         Performs AES-256 (CBC Mode) decryption with a given key and 
         Hashed-based message authentication (HMAC).
@@ -185,10 +188,6 @@ class AESCipher(object):
             encryption key.
         iv : byte string
             initialization vector 
-        ttl : int, optional
-            The "time-to-live" for a given message.  
-            TODO: This needs to be intergrated somehow with the current app
-
             
         Returns
         -------
@@ -244,7 +243,7 @@ class AESCipher(object):
         signing_key : byte string
             authentication key.
         ttl : int, optional
-            The "time-to-live" for a given message.  
+            The "time-to-live" for a given message. (Default=None)  
             TODO: This needs to be intergrated somehow with the current app
             
         Returns
@@ -354,9 +353,9 @@ if __name__ == "__main__":
     key = cipher.generate_key()
     # key = 'c47b0294dbbbee0fec4757f22ffeee3587ca4730c3d33b691df38bab076bc558'
     # key = bytes.fromhex(key)
-    signing_key = cipher.generate_key()
-    ciphertext, iv = cipher.encrypt(msg, key, signing_key)
-    msg_tx = cipher.encode_authentication(ciphertext, iv, signing_key)
+    # signing_key = cipher.generate_key()
+    ciphertext, iv = cipher.encrypt(msg, key)
+    msg_tx, signing_key = cipher.encode_authentication(ciphertext, iv)
     
     ciphertext, iv = cipher.authenticate(msg_tx, signing_key)
     deciphertext = cipher.decrypt(ciphertext, key, iv)
