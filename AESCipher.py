@@ -63,10 +63,9 @@ class AESCipher(object):
         '''
         return os.urandom(self.block_size)
         
-    def encrypt(self, msg, key, signing_key):
+    def encrypt(self, msg, key, signing_key, iv = None):
         '''
-        Performs AES-256 (CBC Mode) encryption with a given key and 
-        Hashed-based message authentication (HMAC).
+        Performs AES-256 (CBC Mode) encryption with a given key.
         
 
         Parameters
@@ -77,6 +76,8 @@ class AESCipher(object):
             encryption key.
         signing_key : byte_string
             authentication key.
+        iv : byte_string, optional
+            initialization vector (default=None)
 
         Returns
         -------
@@ -85,9 +86,6 @@ class AESCipher(object):
 
         '''        
             
-        # Record time for message authentication
-        current_time = int(time.time())
-        
         # Padding is a way to take data that may or may not be a multiple of  
         # the block size for a cipher and extend it out so that it is. This is 
         # required for many block cipher modes as they require the data to be 
@@ -106,7 +104,8 @@ class AESCipher(object):
         # something is encrypted a new initialization_vector should be 
         # generated. Do not reuse an initialization_vector with a given key, 
         # and particularly do not use a constant initialization_vector.
-        iv = self.generate_key()
+        if not iv:
+            iv = self.generate_key()
 
 
         # AES (Advanced Encryption Standard) is a block cipher standardized 
@@ -123,9 +122,30 @@ class AESCipher(object):
         # AES encryptor using CBC mode
         encryptor = Cipher(aes, cbc).encryptor()
         
-        
         ciphertext = encryptor.update(padded_data) + encryptor.finalize()
         
+        return ciphertext, iv
+        
+    def encode_authentication(self, ciphertext, iv):
+        '''
+        Perform SHA-256 Hash-based Message Authentication on the ciphertext
+
+        Parameters
+        ----------
+        ciphertext : bytes string
+            DESCRIPTION.
+        iv : bytes string
+            DESCRIPTION.
+
+        Returns
+        -------
+        bytes-string
+            Ciphertext with authentication code
+
+        '''
+        # Record time for message authentication
+        current_time = int(time.time())    
+    
         # Pack the current time, initialization vector, and ciphertext
         basic_parts = (
             b"\x80" + struct.pack(">Q", current_time) + iv + ciphertext
@@ -136,12 +156,11 @@ class AESCipher(object):
         crypto_hash = hashes.SHA256()
 
         # Hashed-based message authentication (HMAC)
-        # Tool to calculate message authentication codes using cryptographic
-        # hash function coupled with a secret key.
+        # Tool to calculate message authentication codes using 
+        # cryptographic hash function coupled with a secret key.
         h = HMAC(signing_key, crypto_hash)
         h.update(basic_parts) # bytes to hash and authenticate
-        hmac = h.finalize() # finalize current context and return msg as bytes
-        
+        hmac = h.finalize() # finalize current context, return msg as bytes        
         return base64.urlsafe_b64encode(basic_parts + hmac)
 
     def encrypt_file(self, file_path, key, signing_key):
@@ -149,10 +168,11 @@ class AESCipher(object):
         with open(file_path, 'rb') as f:
             msg = f.read()
             
-        return self.encrypt(msg, key, signing_key)
+        ciphertext, iv = self.encrypt(msg, key, signing_key)
+        encoded = self.encode_authentication(ciphertext, iv)
+        return encoded
             
-
-    def decrypt(self, ciphertext, key, signing_key, ttl=None):
+    def decrypt(self, ciphertext, key, iv, ttl=None):
         '''
         Performs AES-256 (CBC Mode) decryption with a given key and 
         Hashed-based message authentication (HMAC).
@@ -163,12 +183,13 @@ class AESCipher(object):
             The encrypted message
         key : byte-string
             encryption key.
-        signing_key : byte_string
-            authentication key.
-        ttl : TYPE, optional
+        iv : byte string
+            initialization vector 
+        ttl : int, optional
             The "time-to-live" for a given message.  
             TODO: This needs to be intergrated somehow with the current app
 
+            
         Returns
         -------
         deciphertext : byte string
@@ -179,51 +200,11 @@ class AESCipher(object):
         InvalidToken Exception : 
             raises if any part of the decrpytion process is interrupted, 
             including: 
-                - ttl has expired
-                - Message is not authentic
                 - Error with decryption
                 - Error with unpadding
 
         '''
         
-        # Split file into timestamp and data and encrpyted message
-        timestamp, data = self._get_unverified_token_data(ciphertext)
-
-        # Get current timestamp for message authentication
-        current_time = int(time.time())
-        
-        # If defined, validate message delivery is within time-to-live
-        if ttl is not None:
-            if timestamp + ttl < current_time:
-                raise InvalidToken
-
-        # TODO: Consider re-adding this if it makes sense            
-        # # If message took longer than _MAX_CLOCK_SKEW seconds to arrive
-        # if current_time + self._MAX_CLOCK_SKEW < timestamp:
-        #     raise InvalidToken
-
-        # SHA-256 is a cryptographic hash function from the SHA-2 family and 
-        # is standardized by NIST. It produces a 256-bit message digest.
-        crypto_hash = hashes.SHA256()
-
-        # Hashed-based message authentication (HMAC)
-        # Tool to calculate message authentication codes using cryptographic
-        # hash function coupled with a secret key.
-        h = HMAC(signing_key, crypto_hash)
-        h.update(data[:-32]) # Grab the signing key
-        
-        # Authenticate message to make sure it has not been tampered with
-        try:
-            h.verify(data[-32:])
-        except InvalidSignature:
-            raise InvalidToken                
-
-        # Extract initialization vector
-        iv = data[9:9+self.block_size]
-        
-        # Extract encrypted message
-        ciphertext = data[9+self.block_size:-32]
-
         # Initialize AES object with encryption key
         aes = AES(key)
         
@@ -252,7 +233,77 @@ class AESCipher(object):
             raise InvalidToken
         return unpadded
 
+    def authenticate(self, ciphertext, signing_key, ttl=None):
+        '''
+        Authenticate transmitted message
+        
+        Parameters
+        ----------
+        ciphertext : byte string
+            The encrypted message
+        signing_key : byte string
+            authentication key.
+        ttl : int, optional
+            The "time-to-live" for a given message.  
+            TODO: This needs to be intergrated somehow with the current app
+            
+        Returns
+        -------
+        ciphertext : byte string
+            The encrypted message
+        iv : byte string
+            initialization vector        
+        
+        Raises
+        ------
+        InvalidToken Exception : 
+            raises if any part of the decrpytion process is interrupted, 
+            including: 
+                - ttl has expired
+                - Message is not authentic
 
+        '''
+        
+        # Split file into timestamp and data and encrpyted message
+        timestamp, data = self._get_unverified_token_data(ciphertext)
+
+        # Get current timestamp for message authentication
+        current_time = int(time.time())
+        
+        # If defined, validate message delivery is within time-to-live
+        if ttl is not None:
+            if timestamp + ttl < current_time:
+                raise InvalidToken
+
+        # TODO: Consider re-adding this if it makes sense            
+        # # If message took longer than _MAX_CLOCK_SKEW seconds to arrive
+        # if current_time + self._MAX_CLOCK_SKEW < timestamp:
+        #     raise InvalidToken
+
+        # SHA-256 is a cryptographic hash function from the SHA-2 family  
+        # and is standardized by NIST. It produces a 256-bit message 
+        # digest.
+        crypto_hash = hashes.SHA256()
+
+        # Hashed-based message authentication (HMAC)
+        # Tool to calculate message authentication codes using 
+        # cryptographic hash function coupled with a secret key.
+        h = HMAC(signing_key, crypto_hash)
+        h.update(data[:-32]) # Grab the signing key
+        
+        # Authenticate message to make sure it has not been tampered with
+        try:
+            h.verify(data[-32:])
+        except InvalidSignature:
+            raise InvalidToken                
+
+        # Extract initialization vector
+        iv = data[9:9+self.block_size]
+        # Extract encrypted message
+        ciphertext = data[9+self.block_size:-32] 
+        
+        return ciphertext, iv
+        
     def _get_unverified_token_data(self, token):
         '''
         This breaks up the ciphertext into timestamp and "other" data for
@@ -301,11 +352,14 @@ if __name__ == "__main__":
     cipher = AESCipher()
     
     key = cipher.generate_key()
+    # key = 'c47b0294dbbbee0fec4757f22ffeee3587ca4730c3d33b691df38bab076bc558'
+    # key = bytes.fromhex(key)
     signing_key = cipher.generate_key()
-    ciphertext = cipher.encrypt(msg, key, signing_key)
+    ciphertext, iv = cipher.encrypt(msg, key, signing_key)
+    msg_tx = cipher.encode_authentication(ciphertext, iv)
     
-    
-    deciphertext = cipher.decrypt(ciphertext, key, signing_key)
+    ciphertext, iv = cipher.authenticate(msg_tx, signing_key)
+    deciphertext = cipher.decrypt(ciphertext, key, iv)
     
     if deciphertext != msg:
         raise ValueError
