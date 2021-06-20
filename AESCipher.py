@@ -63,7 +63,7 @@ class AESCipher(object):
         '''
         return os.urandom(self.block_size)
         
-    def encrypt(self, msg, key, signing_key, iv = None):
+    def encrypt(self, msg, key, iv = None):
         '''
         Performs AES-256 (CBC Mode) encryption with a given key.
         
@@ -74,8 +74,6 @@ class AESCipher(object):
             The message that needs to be encrypted.
         key : byte-string
             encryption key.
-        signing_key : byte_string
-            authentication key.
         iv : byte_string, optional
             initialization vector (default=None)
 
@@ -126,7 +124,7 @@ class AESCipher(object):
         
         return ciphertext, iv
         
-    def encode_authentication(self, ciphertext, iv):
+    def encode_authentication(self, ciphertext, iv, signing_key):
         '''
         Perform SHA-256 Hash-based Message Authentication on the ciphertext
 
@@ -136,6 +134,8 @@ class AESCipher(object):
             DESCRIPTION.
         iv : bytes string
             DESCRIPTION.
+        signing_key : byte string
+            authentication key.
 
         Returns
         -------
@@ -356,7 +356,7 @@ if __name__ == "__main__":
     # key = bytes.fromhex(key)
     signing_key = cipher.generate_key()
     ciphertext, iv = cipher.encrypt(msg, key, signing_key)
-    msg_tx = cipher.encode_authentication(ciphertext, iv)
+    msg_tx = cipher.encode_authentication(ciphertext, iv, signing_key)
     
     ciphertext, iv = cipher.authenticate(msg_tx, signing_key)
     deciphertext = cipher.decrypt(ciphertext, key, iv)
