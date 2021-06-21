@@ -24,6 +24,7 @@ Follow the [project milestones](https://github.com/ron-kemker/pierceslock/milest
 
 | Version | Release Date | Overview |
 | ------------- | ------------- | ------------- |
+| 0.1.2 | 21 Jun 2021 | Validated against NIST KAT test vectors |
 | 0.1.1 | 18 Jun 2021 | Closed Issue #5 - App won't forget original file extension |
 | 0.1.0 | 18 Jun 2021 | Baseline Application Beta Release |
 
