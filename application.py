@@ -43,12 +43,12 @@ class Application(object):
         self.window_height = 400
         self.window_width = 400
         self.key_dir = 'keys'
-        self.version = "0.1.1"
-        self.last_update = '18 Jun 2021'
+        self.version = "0.1.2"
+        self.last_update = '21 Jun 2021'
         
         # Initialize Window
         self.window = tk.Tk()
-        self.window.title("Pierce's Lock 0.1")  # to define the title
+        self.window.title("Pierce's Lock %s" % self.version)
         self.window.geometry("%dx%d" % (self.window_width, 
                                         self.window_height))        
         
