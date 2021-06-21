@@ -334,10 +334,7 @@ class Application(object):
             with open(self.keypath, "rb") as f:
                 key = f.read()
             
-            signing_key = cipher.generate_key()
-            ciphertext = cipher.encrypt_file(self.filepath, 
-                                             key, 
-                                             signing_key)
+            ciphertext, signing_key = cipher.encrypt_file(self.filepath, key)
             
             file_ext = self.filepath.split('.')[-1].upper()
 
@@ -580,10 +577,11 @@ class Application(object):
             
             with open(self.filepath , "rb") as f:
                 msg = f.read()
-                signing_key = msg[:cipher.block_size]
-                ciphertext = msg[cipher.block_size:]
+                signing_key = msg[:16]
+                ciphertext = msg[16:]
             
-            deciphertext = cipher.decrypt(ciphertext, key, signing_key)
+            ciphertext, iv = cipher.authenticate(ciphertext, signing_key)
+            deciphertext = cipher.decrypt(ciphertext, key, iv)
             
             file_ext = self.filepath.split('_')[-1].split('.')[0].lower()
             with open(savepath + '.' + file_ext, 'wb') as f:
