@@ -61,7 +61,7 @@ class AESCipher(object):
             The randomly generated key
 
         '''
-        return os.urandom(self.block_size)
+        return os.urandom(16)
         
     def encrypt(self, msg, key, iv = None):
         '''
@@ -83,19 +83,11 @@ class AESCipher(object):
             Output cipher text.
 
         '''        
-            
-        # Padding is a way to take data that may or may not be a multiple of  
-        # the block size for a cipher and extend it out so that it is. This is 
-        # required for many block cipher modes as they require the data to be 
-        # encrypted to be an exact multiple of the block size.
 
-        # PKCS7 padding works by appending N bytes with the value of chr(N), 
-        # where N is the number of bytes required to make the final block of 
-        # data the same size as the block size.
-        padder = PKCS7(self.block_size * 8).padder()
-        padded_data = padder.update(msg) + padder.finalize()
-
-
+        # AES (Advanced Encryption Standard) is a block cipher standardized 
+        # by NIST. AES is both fast, and cryptographically strong. It is a 
+        aes = AES(key)
+        
         # initialization_vector. Random bytes. They do not need to be kept 
         # secret and they can be included in a transmitted message. Must be the 
         # same number of bytes as the block_size of the cipher. Each time 
@@ -104,18 +96,21 @@ class AESCipher(object):
         # and particularly do not use a constant initialization_vector.
         if not iv:
             iv = self.generate_key()
-
-
-        # AES (Advanced Encryption Standard) is a block cipher standardized 
-        # by NIST. AES is both fast, and cryptographically strong. It is a 
-        aes = AES(key)
-        
-        # Set encryption to 256 bits (32 * 8 = 256)
-        aes.block_size = self.block_size * 8
         
         # CBC (Cipher Block Chaining) is a mode of operation for block ciphers. 
         # It is considered cryptographically strong.
         cbc = CBC(iv)
+        
+        # Padding is a way to take data that may or may not be a multiple of  
+        # the block size for a cipher and extend it out so that it is. This is 
+        # required for many block cipher modes as they require the data to be 
+        # encrypted to be an exact multiple of the block size.
+
+        # PKCS7 padding works by appending N bytes with the value of chr(N), 
+        # where N is the number of bytes required to make the final block of 
+        # data the same size as the block size.
+        padder = PKCS7(aes.block_size).padder()
+        padded_data = padder.update(msg) + padder.finalize()
         
         # AES encryptor using CBC mode
         encryptor = Cipher(aes, cbc).encryptor()
@@ -207,9 +202,6 @@ class AESCipher(object):
         # Initialize AES object with encryption key
         aes = AES(key)
         
-        # Set encryption to 256 bits (32 * 8 = 256)        
-        aes.block_size = self.block_size * 8
-
         # CBC (Cipher Block Chaining) is a mode of operation for block ciphers. 
         # It is considered cryptographically strong.
         cbc = CBC(iv)
@@ -223,7 +215,7 @@ class AESCipher(object):
             raise InvalidToken
         
         # Unpadding the plain text
-        unpadder = PKCS7(self.block_size * 8).unpadder()
+        unpadder = PKCS7(aes.block_size).unpadder()
 
         unpadded = unpadder.update(plaintext_padded)
         try:
@@ -297,9 +289,9 @@ class AESCipher(object):
             raise InvalidToken                
 
         # Extract initialization vector
-        iv = data[9:9+self.block_size]
+        iv = data[9:25]
         # Extract encrypted message
-        ciphertext = data[9+self.block_size:-32] 
+        ciphertext = data[25:-32] 
         
         return ciphertext, iv
         
@@ -351,9 +343,6 @@ if __name__ == "__main__":
     cipher = AESCipher()
     
     key = cipher.generate_key()
-    # key = 'c47b0294dbbbee0fec4757f22ffeee3587ca4730c3d33b691df38bab076bc558'
-    # key = bytes.fromhex(key)
-    # signing_key = cipher.generate_key()
     ciphertext, iv = cipher.encrypt(msg, key)
     msg_tx, signing_key = cipher.encode_authentication(ciphertext, iv)
     
