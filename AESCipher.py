@@ -161,14 +161,14 @@ class AESCipher(object):
         hmac = h.finalize() # finalize current context, return msg as bytes        
         return base64.urlsafe_b64encode(basic_parts + hmac), signing_key
 
-    def encrypt_file(self, file_path, key, signing_key):
+    def encrypt_file(self, file_path, key):
         
         with open(file_path, 'rb') as f:
             msg = f.read()
             
-        ciphertext, iv = self.encrypt(msg, key, signing_key)
-        encoded = self.encode_authentication(ciphertext, iv)
-        return encoded
+        ciphertext, iv = self.encrypt(msg, key)
+        encoded, signing_key = self.encode_authentication(ciphertext, iv)
+        return encoded, signing_key
             
     def decrypt(self, ciphertext, key, iv):
         '''
