@@ -41,9 +41,7 @@ class NIST_Testing(unittest.TestCase):
 
             decrypt_out = aes.decrypt(encrypt_out, key, iv)
             self.assertEqual(decrypt_out, plaintext)
-            
-
-    
+                
     def test_CBCKeySbox256e(self):
 
         filename = 'KAT_AES/CBCKeySbox256e.txt'
@@ -69,6 +67,7 @@ class NIST_Testing(unittest.TestCase):
             
             decrypt_out = aes.decrypt(encrypt_out, key, iv)
             self.assertEqual(decrypt_out, plaintext)            
+
     def test_CBCVarTxt256e(self):
 
         filename = 'KAT_AES/CBCVarTxt256e.txt'
