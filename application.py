@@ -713,11 +713,11 @@ class Application(object):
                       text='Encryption Key:', 
                       font=('Helvetica', 12,'bold')
                       )
-        label.place(x=301, y=50, width=400, height=30)
+        label.place(x=355, y=50, width=460, height=30)
         
         self.key_var = StringVar()
         key_entry = Entry(self.background_frame, textvariable=self.key_var)
-        key_entry.place(x= 301, y=81, width=405, height=30)         
+        key_entry.place(x= 355, y=81, width=460, height=30)         
                     
         button = Button(self.background_frame, 
                         text='Generate Random Key',
@@ -727,7 +727,12 @@ class Application(object):
         button = Button(self.background_frame, 
                         text='Save Key',
                         command=self.add_key)
-        button.place(x=505, y=120, width=150, height=50)        
+        button.place(x=510, y=120, width=150, height=50)        
+
+        button = Button(self.background_frame, 
+                        text='Delete Key',
+                        command=self.delete_key_prompt)
+        button.place(x=665, y=120, width=150, height=50) 
 
         button = Button(self.background_frame,
                              text='<<< Back to Main Menu',
@@ -753,6 +758,41 @@ class Application(object):
             
         self.key_var.set(key)
 
+    def delete_key_prompt(self):
+        
+            self.popup_window = tk.Toplevel()
+            self.popup_window.geometry("300x100") 
+            self.popup_window.wm_title("Delete Key?")
+            
+            # Background of the popup window
+            bkgd_frame = Frame(self.popup_window, width=300, height=100)
+            bkgd_frame.pack()
+            
+            # Label that displays the prompt
+            prompt_txt = "Are you sure you want to delete this key?" 
+            prompt = Label(bkgd_frame, text=prompt_txt)
+            prompt.place(x=25, y=20, width=250)
+            
+            # Buttons to save and quit, just quit, and cancel the "quit" 
+            # command
+            button = Button(bkgd_frame, text="Yes", 
+                               command=self.delete_key)
+            button.place(x=49, y=50, width=100, height=30 )        
+            
+            button = Button(bkgd_frame, text="No", 
+                                   command=self.popup_window.destroy)
+            button.place(x=151, y=50, width=100, height=30)          
+
+
+    def delete_key(self):
+        
+        ii = self.left_pane.curselection()
+        filename = self.left_pane.get(ii)
+
+        os.remove(self.key_dir + '\\%s.key' % filename)
+        self.popup_window.destroy()
+        self.key_manager_window()
+        
 
     def add_key(self):
         '''
