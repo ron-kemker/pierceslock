@@ -43,7 +43,7 @@ class Application(object):
         self.window_height = 400
         self.window_width = 400
         self.key_dir = os.path.abspath('keys')
-        self.version = "0.1.2"
+        self.version = "0.1.3"
         self.last_update = '21 Jun 2021'
         
         # Initialize Window
