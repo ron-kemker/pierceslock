@@ -683,9 +683,11 @@ class Application(object):
                       text='Key Directory: ')
         label.place(x=0, y=0, width=100, height=30)
         
-        key_path_var = StringVar()
-        path_pane = Entry(self.background_frame, textvariable=key_path_var)
-        key_path_var.set(self.key_dir)
+        self.key_path_var = StringVar()
+        path_pane = Entry(self.background_frame, 
+                          textvariable=self.key_path_var)
+        self.key_path_var.set(self.key_dir)
+        path_pane.bind('<Return>', self.update_key_dir)
         path_pane.place(x=100, y=0, width=self.window_width-250, height=30)
         
         button = Button(self.background_frame,
@@ -759,32 +761,40 @@ class Application(object):
         self.key_var.set(key)
 
     def delete_key_prompt(self):
+        '''
+        Helper function for key_manager_window.  Provide a prompt whether to 
+        not or to delete the selected key.
+        '''
         
-            self.popup_window = tk.Toplevel()
-            self.popup_window.geometry("300x100") 
-            self.popup_window.wm_title("Delete Key?")
-            
-            # Background of the popup window
-            bkgd_frame = Frame(self.popup_window, width=300, height=100)
-            bkgd_frame.pack()
-            
-            # Label that displays the prompt
-            prompt_txt = "Are you sure you want to delete this key?" 
-            prompt = Label(bkgd_frame, text=prompt_txt)
-            prompt.place(x=25, y=20, width=250)
-            
-            # Buttons to save and quit, just quit, and cancel the "quit" 
-            # command
-            button = Button(bkgd_frame, text="Yes", 
-                               command=self.delete_key)
-            button.place(x=49, y=50, width=100, height=30 )        
-            
-            button = Button(bkgd_frame, text="No", 
-                                   command=self.popup_window.destroy)
-            button.place(x=151, y=50, width=100, height=30)          
+        self.popup_window = tk.Toplevel()
+        self.popup_window.geometry("300x100") 
+        self.popup_window.wm_title("Delete Key?")
+        
+        # Background of the popup window
+        bkgd_frame = Frame(self.popup_window, width=300, height=100)
+        bkgd_frame.pack()
+        
+        # Label that displays the prompt
+        prompt_txt = "Are you sure you want to delete this key?" 
+        prompt = Label(bkgd_frame, text=prompt_txt)
+        prompt.place(x=25, y=20, width=250)
+        
+        # Buttons to save and quit, just quit, and cancel the "quit" 
+        # command
+        button = Button(bkgd_frame, text="Yes", 
+                           command=self.delete_key)
+        button.place(x=49, y=50, width=100, height=30 )        
+        
+        button = Button(bkgd_frame, text="No", 
+                               command=self.popup_window.destroy)
+        button.place(x=151, y=50, width=100, height=30)          
 
 
     def delete_key(self):
+        '''
+        Helper function for key_manager_window.  This delete the selected
+        .key file
+        '''
         
         ii = self.left_pane.curselection()
         filename = self.left_pane.get(ii)
@@ -848,9 +858,51 @@ class Application(object):
         new_key : byte string 
            The new random key being generated
         '''
-        cipher = AESCipher()
         self.new_key = os.urandom(32).hex()
         self.key_var.set(self.new_key)
+
+    def update_key_dir(self, event):
+        '''
+        Helper function for key_manager_window.  This updates the directory
+        path using the entry box.
+
+        Parameters
+        ----------
+        event : tkinter event object
+            This contains the listener obj for the key manager's key_path_var
+            
+        Attributes
+        ----------
+        key_dir : string 
+            This is the path to the key directory.
+        '''
+        new_key_dir = self.key_path_var.get()
+        
+        if os.path.exists(new_key_dir):
+            self.key_dir = new_key_dir
+            self.key_manager_window()
+        else:
+            
+            popup_window = tk.Toplevel()
+            popup_window.geometry("300x100") 
+            popup_window.wm_title("Invalid Path")
+            
+            # Background of the popup window
+            bkgd_frame = Frame(popup_window, width=300, height=100)
+            bkgd_frame.pack()
+            
+            # Label that displays the prompt            
+            prompt_txt = "This path does not exist."
+            prompt = Label(bkgd_frame, text=prompt_txt)
+            prompt.place(x=25, y=20, width=250)
+            
+            # Buttons to save and quit, just quit, and cancel the "quit" 
+            # command
+            button = Button(bkgd_frame, text="Close", 
+                               command=popup_window.destroy)
+            button.place(x=100, y=50, width=100, height=30 )
+            
+            self.key_manager_window()            
 
     def change_key_dir(self):
         '''
