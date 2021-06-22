@@ -9,7 +9,7 @@ Description: This is the main GUI application for the "Pierce's Lock"
 
 """
 
-import glob, base64
+import glob, binascii, os
 import tkinter as tk
 from tkinter import Frame, Button, Label, Menu, Entry, StringVar, Listbox, \
     Scrollbar
@@ -331,9 +331,10 @@ class Application(object):
             
             cipher = AESCipher()
             
-            with open(self.keypath, "rb") as f:
+            with open(self.keypath, "r") as f:
                 key = f.read()
             
+            key = binascii.unhexlify(key)
             ciphertext, signing_key = cipher.encrypt_file(self.filepath, key)
             
             file_ext = self.filepath.split('.')[-1].upper()
@@ -572,8 +573,10 @@ class Application(object):
             
             cipher = AESCipher()
             
-            with open(self.keypath, "rb") as f:
+            with open(self.keypath, "r") as f:
                 key = f.read()
+            
+            key = binascii.unhexlify(key)
             
             with open(self.filepath , "rb") as f:
                 msg = f.read()
@@ -748,7 +751,7 @@ class Application(object):
         with open(self.key_dir + '\\%s.key' % filename, 'rb') as f:
             key = f.read()
             
-        self.key_var.set(base64.urlsafe_b64encode(key))
+        self.key_var.set(key)
 
 
     def add_key(self):
@@ -763,7 +766,7 @@ class Application(object):
         if not savepath:
             return
 
-        with open(savepath + '.key' , "wb") as f:
+        with open(savepath + '.key' , "w") as f:
             f.write(self.new_key)
             
         self.key_manager_window()
@@ -779,8 +782,8 @@ class Application(object):
            The new random key being generated
         '''
         cipher = AESCipher()
-        self.new_key = cipher.generate_key()
-        self.key_var.set(base64.urlsafe_b64encode(self.new_key))
+        self.new_key = os.urandom(32).hex()
+        self.key_var.set(self.new_key)
 
     def change_key_dir(self):
         '''
