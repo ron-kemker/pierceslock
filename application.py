@@ -42,7 +42,7 @@ class Application(object):
         
         self.window_height = 400
         self.window_width = 400
-        self.key_dir = 'keys'
+        self.key_dir = os.path.abspath('keys')
         self.version = "0.1.2"
         self.last_update = '21 Jun 2021'
         
@@ -664,7 +664,7 @@ class Application(object):
             The variable that contains what is present in the entry text box
         '''
         self.window_height = 600
-        self.window_width = 600
+        self.window_width = 1000
         self.window.geometry("%dx%d" % (self.window_width, 
                                         self.window_height))
         
@@ -697,7 +697,7 @@ class Application(object):
         self.left_pane.bind('<<ListboxSelect>>', self.select_key)
         
         self.left_pane.place(x=0, y=31, 
-                        width=self.window_width/2, 
+                        width=300, 
                         height=self.window_height)
 
 
@@ -713,26 +713,26 @@ class Application(object):
                       text='Encryption Key:', 
                       font=('Helvetica', 12,'bold')
                       )
-        label.place(x=301, y=50, width=298, height=30)
+        label.place(x=301, y=50, width=400, height=30)
         
         self.key_var = StringVar()
         key_entry = Entry(self.background_frame, textvariable=self.key_var)
-        key_entry.place(x= 301, y=81, width=298, height=30)         
+        key_entry.place(x= 301, y=81, width=405, height=30)         
                     
         button = Button(self.background_frame, 
                         text='Generate Random Key',
                         command=self.generate_key)
-        button.place(x=375, y=120, width=150, height=50)
+        button.place(x=355, y=120, width=150, height=50)
         
         button = Button(self.background_frame, 
                         text='Save Key',
                         command=self.add_key)
-        button.place(x=375, y=171, width=150, height=50)        
+        button.place(x=505, y=120, width=150, height=50)        
 
         button = Button(self.background_frame,
                              text='<<< Back to Main Menu',
                              command=self.draw_menu)
-        button.place(x=375, y=222, width=150, height=50)
+        button.place(x=575, y=540, width=150, height=50)
 
 
     def select_key(self, event):
@@ -759,18 +759,45 @@ class Application(object):
         Helper function for key_manager_window.  This creates a new .key file
         for the key typed or generated in the Entry box.
         '''
-        savepath = asksaveasfilename(filetypes=(("KEY File", ['.key']),),
-                                             initialdir = '', 
-                                             title = "Save key")
-            
-        if not savepath:
-            return
+        
+        self.new_key = self.key_var.get()
 
-        with open(savepath + '.key' , "w") as f:
-            f.write(self.new_key)
+        
+        if all(c in '0123456789abcdefABCDEF' for c in self.new_key):
+                
+            savepath = asksaveasfilename(filetypes=(("KEY File", ['.key']),),
+                                                 initialdir = '', 
+                                                 title = "Save key")
+                
+            if not savepath:
+                return
+    
+            with open(savepath + '.key' , "w") as f:
+                f.write(self.new_key)
+                
+            self.key_manager_window()
             
-        self.key_manager_window()
-
+        else:
+            
+            popup_window = tk.Toplevel()
+            popup_window.geometry("300x100") 
+            popup_window.wm_title("Key Error")
+            
+            # Background of the popup window
+            bkgd_frame = Frame(popup_window, width=300, height=100)
+            bkgd_frame.pack()
+            
+            # Label that displays the prompt            
+            prompt_txt = "The key can only contain hexidecimal values."
+            prompt = Label(bkgd_frame, text=prompt_txt)
+            prompt.place(x=25, y=20, width=250)
+            
+            # Buttons to save and quit, just quit, and cancel the "quit" 
+            # command
+            button = Button(bkgd_frame, text="Close", 
+                               command=popup_window.destroy)
+            button.place(x=100, y=50, width=100, height=30 )    
+    
     def generate_key(self):
         '''
         Helper function for key_manager_window.  This generates a new random
