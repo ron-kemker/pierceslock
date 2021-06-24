@@ -16,7 +16,8 @@ from tkinter import Frame, Button, Label, Menu, Entry, StringVar, Listbox, \
 from tkinter.filedialog import askopenfilename,asksaveasfilename,askdirectory
 from PIL import ImageTk, Image
 
-from AESCipher import AESCipher
+from AESCipher import AESCipher,InvalidToken,AuthenticationFailed,\
+    DecryptionFailed, UnpaddingError, TTLError
 
 class Application(object):
     
@@ -583,8 +584,28 @@ class Application(object):
                 signing_key = msg[:16]
                 ciphertext = msg[16:]
             
-            ciphertext, iv = cipher.authenticate(ciphertext, signing_key)
-            deciphertext = cipher.decrypt(ciphertext, key, iv)
+            
+            try:
+                ciphertext, iv = cipher.authenticate(ciphertext, signing_key)
+            except TTLError:
+                self.one_button_popup("TTL Failure",
+                            "The message's time-to-live (TTL) has expired.")
+                return
+            except AuthenticationFailed:
+                self.one_button_popup("Authentication Failed",
+                                      "Message Authentication has Failed")                
+                return
+            
+            try:
+                deciphertext = cipher.decrypt(ciphertext, key, iv)
+            except DecryptionFailed:
+                self.one_button_popup("Decryption Failed",
+                                      "Message Decryption has Failed")                
+                return                
+            except UnpaddingError:
+                self.one_button_popup("Unpadding Failed",
+                            "Message unpadding after decryption has failed.")                
+                return              
             
             file_ext = self.filepath.split('_')[-1].split('.')[0].lower()
             with open(savepath + '.' + file_ext, 'wb') as f:
