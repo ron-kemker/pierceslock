@@ -20,6 +20,18 @@ from cryptography import utils
 class InvalidToken(Exception):
     pass
 
+class AuthenticationFailed(Exception):
+    pass
+
+class DecryptionFailed(Exception):
+    pass
+
+class UnpaddingError(Exception):
+    pass
+
+class TTLError(Exception):
+    pass
+
 class AESCipher(object):
     '''
     AESCipher Class
@@ -212,7 +224,7 @@ class AESCipher(object):
         try:
             plaintext_padded += decryptor.finalize()
         except ValueError:
-            raise InvalidToken
+            raise DecryptionFailed
         
         # Unpadding the plain text
         unpadder = PKCS7(aes.block_size).unpadder()
@@ -221,7 +233,7 @@ class AESCipher(object):
         try:
             unpadded += unpadder.finalize()
         except ValueError:
-            raise InvalidToken
+            raise UnpaddingError
         return unpadded
 
     def authenticate(self, ciphertext, signing_key, ttl=None):
@@ -264,7 +276,7 @@ class AESCipher(object):
         # If defined, validate message delivery is within time-to-live
         if ttl is not None:
             if timestamp + ttl < current_time:
-                raise InvalidToken
+                raise TTLError
 
         # TODO: Consider re-adding this if it makes sense            
         # # If message took longer than _MAX_CLOCK_SKEW seconds to arrive
@@ -286,7 +298,7 @@ class AESCipher(object):
         try:
             h.verify(data[-32:])
         except InvalidSignature:
-            raise InvalidToken                
+            raise AuthenticationFailed                
 
         # Extract initialization vector
         iv = data[9:25]
