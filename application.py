@@ -868,6 +868,38 @@ class Application(object):
             button = Button(bkgd_frame, text="Close", 
                                command=popup_window.destroy)
             button.place(x=100, y=50, width=100, height=30 )    
+
+    def one_button_popup(self, title, msg):
+        '''
+        Display a message pop-up with a close button
+
+        Parameters
+        ----------
+        title : string
+            The title bar message (should be  short).
+        msg : string
+            The detailed message to get displayed.
+
+        '''
+        
+        popup_window = tk.Toplevel()
+        popup_window.geometry("300x100") 
+        popup_window.wm_title(title)
+        
+        # Background of the popup window
+        bkgd_frame = Frame(popup_window, width=300, height=100)
+        bkgd_frame.pack()
+        
+        # Label that displays the prompt            
+        prompt = Label(bkgd_frame, text=msg)
+        prompt.place(x=25, y=20, width=250)
+        
+        # Buttons to save and quit, just quit, and cancel the "quit" 
+        # command
+        button = Button(bkgd_frame, text="Close", 
+                           command=popup_window.destroy)
+        button.place(x=100, y=50, width=100, height=30 ) 
+
     
     def generate_key(self):
         '''
