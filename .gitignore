@@ -114,6 +114,7 @@ dmypy.json
 .pyre/
 *.key
 *.cmf
+*.pwf
 *.pdf
 *KAT_AES/*
 *dev/*
