@@ -116,3 +116,4 @@ dmypy.json
 *.cmf
 *.pdf
 *KAT_AES/*
+*dev/*
