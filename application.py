@@ -12,12 +12,14 @@ Description: This is the main GUI application for the "Pierce's Lock"
 import glob, binascii, os
 import tkinter as tk
 from tkinter import Frame, Button, Label, Menu, Entry, StringVar, Listbox, \
-    Scrollbar
+    Scrollbar, ttk
 from tkinter.filedialog import askopenfilename,asksaveasfilename,askdirectory
 from PIL import ImageTk, Image
 
 from AESCipher import AESCipher,InvalidToken,AuthenticationFailed,\
     DecryptionFailed, UnpaddingError, TTLError
+
+from password_manager import PasswordManager
 
 class Application(object):
     
@@ -37,45 +39,31 @@ class Application(object):
            The version number of the current software
         last_update : string
            The Date that the last update took place
-        window :Tkinter object
-           The main application window  
+        window : Tkinter object
+           The main application window
+        pwm : PasswordManager object
+            This is used to add the PasswordManager to the main application
+            
+        Returns
+        -------
+        None.        
         '''
         
         self.window_height = 400
         self.window_width = 400
         self.key_dir = os.path.abspath('keys')
-        self.version = "0.1.3"
-        self.last_update = '21 Jun 2021'
-        
+        self.version = "0.1.4"
+        self.last_update = '21 Nov 2021'
+                
         # Initialize Window
         self.window = tk.Tk()
         self.window.title("Pierce's Lock %s" % self.version)
         self.window.geometry("%dx%d" % (self.window_width, 
                                         self.window_height))        
         
-        # Build the menu
-        menu = Menu(self.window)
-        self.window.config(menu=menu)
-        
-        fileMenu = Menu(menu)
-        menu.add_cascade(label='File', menu=fileMenu)
-        fileMenu.add_command(label='Quit', command=self.quit_prompt)
-        
-        toolMenu = Menu(menu)
-        menu.add_cascade(label='Tools', menu=toolMenu)
-        toolMenu.add_command(label='Encrypt File', 
-                             command=self.encryption_window)
-        toolMenu.add_command(label='Decrypt File', 
-                             command=self.decryption_window)
-        toolMenu.add_command(label='Key Manager', 
-                             command=self.key_manager_window)
-        
-        helpMenu = Menu(menu)
-        menu.add_cascade(label='Help', menu=helpMenu)
-        helpMenu.add_command(label='About', command=self.about_window)
-        
+        self.pwm = PasswordManager(self)
         # Draw the menu
-        self.draw_menu()
+        self.draw_main()
         
         # Run the application till closed
         self.window.mainloop()
@@ -86,13 +74,58 @@ class Application(object):
 
         Attributes
         ----------
+        menu : tkinter Menu object 
+           The menu toolbar 
+           
+        Returns
+        -------
+        None.
+        '''
+        
+        if hasattr(self, 'menu'):
+            self.menu.destroy()
+        
+        # Build the menu
+        self.menu = Menu(self.window)
+        self.window.config(menu=self.menu)
+        
+        fileMenu = Menu(self.menu)
+        self.menu.add_cascade(label='File', menu=fileMenu)
+                   
+        fileMenu.add_command(label='Quit', command=self.quit_prompt)
+        
+        toolMenu = Menu(self.menu)
+        self.menu.add_cascade(label='Tools', menu=toolMenu)
+        toolMenu.add_command(label='Encrypt File', 
+                             command=self.encryption_window)
+        toolMenu.add_command(label='Decrypt File', 
+                             command=self.decryption_window)
+        toolMenu.add_command(label='Key Manager', 
+                             command=self.key_manager_window)
+        
+        toolMenu.add_command(label='Password Manager', 
+                              command=self.pwm.password_manager_window)        
+        
+        helpMenu = Menu(self.menu)
+        self.menu.add_cascade(label='Help', menu=helpMenu)
+        helpMenu.add_command(label='About', command=self.about_window)
+
+    def draw_main(self):
+        '''
+        Draws the main GUI
+
+        Attributes
+        ----------
         window_height : int 
            Pixel height of base application 
         window_width : int 
            Pixel width of base application 
-        background_frame :Tkinter Frame object
+        background_frame : Tkinter Frame object
            The space to draw the app content 
-
+           
+        Returns
+        -------
+        None.
         '''    
         self.window_height = 400
         self.window_width = 400
@@ -103,12 +136,12 @@ class Application(object):
             self.popup_window.destroy()
         if hasattr(self, 'background_frame'):
             self.background_frame.destroy()        
+        self.draw_menu()
         
         self.background_frame = Frame(self.window, 
                                  width=self.window_width,
                                  height=self.window_height)
         self.background_frame.pack()
-        
         
         label = Label(self.background_frame, 
                       text='Pierce\'s Lock', 
@@ -118,27 +151,36 @@ class Application(object):
         button1 = Button(self.background_frame,
                          text='Encrypt File',
                          command=self.encryption_window)
-        button1.place(x=150, y=100, width=100, height=50)
+        button1.place(x=140, y=100, width=120, height=50)
 
         button2 = Button(self.background_frame,
                          text='Decrypt File',
                          command=self.decryption_window)
-        button2.place(x=150, y=151, width=100, height=50)
+        button2.place(x=140, y=151, width=120, height=50)
 
         button3 = Button(self.background_frame,
                          text='Key Manager',
                          command=self.key_manager_window)
-        button3.place(x=150, y=202, width=100, height=50)
+        button3.place(x=140, y=202, width=120, height=50)
         
         button4 = Button(self.background_frame,
+                          text='Password Manager',
+                          command=self.pwm.password_manager_window)
+        button4.place(x=140, y=253, width=120, height=50)
+
+        button5 = Button(self.background_frame,
                          text='Exit',
                          command=self.quit_prompt)
-        button4.place(x=150, y=253, width=100, height=50)
+        button5.place(x=140, y=304, width=120, height=50)
 
     def quit_prompt(self):
         '''
         Helper function for draw_menu function.  Displays a prompt to quit the
         application.
+        
+        Returns
+        -------
+        None.
         '''        
         popup_window = tk.Toplevel()
         popup_window.geometry("300x100") 
@@ -166,7 +208,10 @@ class Application(object):
     def about_window(self):
         '''
         Pop-up window with brief description of the application.
-
+        
+        Returns
+        -------
+        None.
         '''
         popup_window = tk.Toplevel()
         popup_window.geometry("300x500") 
@@ -191,6 +236,84 @@ class Application(object):
         button1 = Button(bkgd_frame, text="Close", 
                            command=popup_window.destroy)
         button1.place(x=100, y=450, width=100, height=30 )        
+
+
+    def encryption_window_new(self):
+        '''
+        This generates a window to encrypt files
+
+        Attributes:
+        -----------
+        window_height : int
+            The heights of the window
+        window_width : int
+            The width of the window
+        background_frame : tkinter Frame object
+            The drawing canvas for the window
+        key_path_var : StringVar object
+            The entry for the key file
+        left_pane : tkinter Listbox object
+            The list of possible keys
+
+        Returns
+        -------
+        None.
+
+        '''
+        self.window_height = 600
+        self.window_width = 801
+        
+        self.window.geometry("%dx%d" % (self.window_width, 
+                                        self.window_height))
+        
+        if hasattr(self, 'popup_window'):
+            self.popup_window.destroy()
+        if hasattr(self, 'background_frame'):
+            self.background_frame.destroy()        
+        
+        self.background_frame = Frame(self.window, 
+                                 width=self.window_width,
+                                 height=self.window_height)
+        self.background_frame.pack()        
+        self.draw_menu()
+        
+        label = Label(self.background_frame,
+                      text='File(s) to Encrypt: ')
+        label.place(x=0, y=0, width=100, height=30)
+        
+        self.key_path_var = StringVar()
+        path_pane = Entry(self.background_frame, 
+                          textvariable=self.key_path_var)
+        self.key_path_var.set(self.key_dir)
+        path_pane.bind('<Return>', self.update_key_dir)
+        path_pane.place(x=100, y=0, width=self.window_width-250, height=30)
+        
+        button = Button(self.background_frame,
+                        text='Browse',
+                        command=self.change_key_dir)
+        button.place(x=self.window_width-150, y=0, width=150, height=30)
+        
+        self.left_pane = Listbox(self.background_frame)
+        self.left_pane.bind('<<ListboxSelect>>', self.select_key)
+        
+        self.left_pane.place(x=0, y=31, 
+                        width=300, 
+                        height=self.window_height)
+
+
+        for i, key_file in enumerate(glob.glob(self.key_dir + '/*.key')):
+            self.left_pane.insert(i, key_file.split('\\')[-1][:-4])
+        
+        scrollbar = Scrollbar(self.left_pane)
+        scrollbar.pack(side = tk.RIGHT, fill = tk.BOTH)
+        self.left_pane.config(yscrollcommand = scrollbar.set)
+        scrollbar.config(command = self.left_pane.yview)
+        
+        label = Label(self.background_frame, 
+                      text='Encryption Key:', 
+                      font=('Helvetica', 12,'bold')
+                      )
+        label.place(x=355, y=50, width=460, height=30)
         
     
     def encryption_window(self):
@@ -213,6 +336,10 @@ class Application(object):
             The label for the status for step 1, i.e., select file to encrypt
         label_status_2 : tkinter Label object
             The label for the status for step 2, i.e., select key file
+            
+        Returns
+        -------
+        None.
         '''
         
         self.window_height = 400
@@ -231,6 +358,7 @@ class Application(object):
             self.background_frame.destroy()  
         if hasattr(self, 'popup_window'):
             self.popup_window.destroy()            
+        self.draw_menu()
         
         self.window.geometry("%dx%d" % (self.window_width, 
                                         self.window_height))
@@ -304,7 +432,7 @@ class Application(object):
         
         button = Button(self.background_frame,
                              text='<<< Back to Main Menu',
-                             command=self.draw_menu)
+                             command=self.draw_main)
         
         button.place(x=5, y=self.window_height - 35, width=150, height=30)
 
@@ -317,7 +445,10 @@ class Application(object):
         ----------
         popup_window : tkinter TopLevel object 
            This popup window is the prompt once encryption is complete
-              
+           
+        Returns
+        -------
+        None.              
         '''
         
         if self.filepath and self.keypath:
@@ -369,7 +500,7 @@ class Application(object):
             button.place(x=49, y=50, width=100, height=30 )        
             
             button = Button(bkgd_frame, text="No", 
-                                   command=self.draw_menu)
+                                   command=self.draw_main)
             button.place(x=151, y=50, width=100, height=30)
 
     def find_file(self):
@@ -383,7 +514,11 @@ class Application(object):
         filepath : string 
            This is the path to the file that will be encrypted.
         label_status_1 : tkinter Label object
-            The label for the status for step 1, i.e., select file to encrypt           
+            The label for the status for step 1, i.e., select file to encrypt
+        
+        Returns
+        -------
+        None.
         '''
         
         self.filepath = askopenfilename(initialdir = '', 
@@ -417,6 +552,10 @@ class Application(object):
            This is the path to the key file
         label_status_2 : tkinter Label object
            The label for the status for step 2, i.e., select key file
+           
+        Returns
+        -------
+        None.
         '''
         
         self.keypath = askopenfilename(filetypes=(("KEY File", ['.key']),),
@@ -459,6 +598,10 @@ class Application(object):
             The label for the status for step 1, i.e., select file to decrypt
         label_status_2 : tkinter Label object
             The label for the status for step 2, i.e., select key file
+            
+        Returns
+        -------
+        None.
         '''        
         self.window_height = 400
         self.window_width = 801
@@ -476,6 +619,7 @@ class Application(object):
             self.background_frame.destroy()  
         if hasattr(self, 'popup_window'):
             self.popup_window.destroy()            
+        self.draw_menu()
         
         self.window.geometry("%dx%d" % (self.window_width, 
                                         self.window_height))
@@ -549,7 +693,7 @@ class Application(object):
         
         button = Button(self.background_frame,
                              text='<<< Back to Main Menu',
-                             command=self.draw_menu)
+                             command=self.draw_main)
         
         button.place(x=5, y=self.window_height - 35, width=150, height=30)  
         
@@ -562,7 +706,10 @@ class Application(object):
         ----------
         popup_window : tkinter TopLevel object 
            This popup window is the prompt once decryption is complete
-              
+           
+        Returns
+        -------
+        None.              
         '''
         if self.filepath and self.keypath:
             
@@ -579,12 +726,11 @@ class Application(object):
             
             key = binascii.unhexlify(key)
             
-            with open(self.filepath , "rb") as f:
+            with open(self.filepath, "rb") as f:
                 msg = f.read()
                 signing_key = msg[:16]
                 ciphertext = msg[16:]
-            
-            
+                                 
             try:
                 ciphertext, iv = cipher.authenticate(ciphertext, signing_key)
             except TTLError:
@@ -631,7 +777,7 @@ class Application(object):
             button.place(x=49, y=50, width=100, height=30 )        
             
             button = Button(bkgd_frame, text="No", 
-                                   command=self.draw_menu)
+                                   command=self.draw_main)
             button.place(x=151, y=50, width=100, height=30)    
 
     def find_cmf_file(self):
@@ -646,6 +792,10 @@ class Application(object):
            This is the path to the file that will be decrypted.
         label_status_1 : tkinter Label object
            The label for the status for step 1, i.e., select file to decrypt
+           
+        Returns
+        -------
+        None.
         '''
         self.filepath = askopenfilename(filetypes=(("CMF File", ['.cmf']),),
                                         initialdir = '', 
@@ -666,7 +816,7 @@ class Application(object):
                                   y=150, 
                                   width=col2-100, 
                                   height=col2-100)
-        
+     
     def key_manager_window(self):
         '''
         Opens the key management window in the application
@@ -683,6 +833,10 @@ class Application(object):
            The frame that shows the list of keys in the directory of choice
         key_var : tkinter StringVar object
             The variable that contains what is present in the entry text box
+            
+        Returns
+        -------
+        None.
         '''
         self.window_height = 600
         self.window_width = 1000
@@ -693,6 +847,7 @@ class Application(object):
             self.popup_window.destroy()
         if hasattr(self, 'background_frame'):
             self.background_frame.destroy()        
+        self.draw_menu()
         
         self.background_frame = Frame(self.window, 
                                  width=self.window_width,
@@ -759,7 +914,7 @@ class Application(object):
 
         button = Button(self.background_frame,
                              text='<<< Back to Main Menu',
-                             command=self.draw_menu)
+                             command=self.draw_main)
         button.place(x=575, y=540, width=150, height=50)
 
 
@@ -772,6 +927,15 @@ class Application(object):
         ----------
         event : tkinter event object
             This contains the listener object for the key manager's left_pane
+        
+        Attributes
+        ----------
+        popup_window : tkinter TopLevel object
+            The popup for the key selection tool
+        
+        Returns
+        -------
+        None.
         '''
         ii = self.left_pane.curselection()
         filename = self.left_pane.get(ii)
@@ -779,12 +943,21 @@ class Application(object):
         with open(self.key_dir + '\\%s.key' % filename, 'rb') as f:
             key = f.read()
             
-        self.key_var.set(key)
+        self.key_var.set(key.decode('utf-8'))
 
     def delete_key_prompt(self):
         '''
         Helper function for key_manager_window.  Provide a prompt whether to 
         not or to delete the selected key.
+
+        Attributes
+        ----------
+        popup_window : tkinter TopLevel object
+            The popup for the key selection tool
+        
+        Returns
+        -------
+        None.
         '''
         
         self.popup_window = tk.Toplevel()
@@ -815,6 +988,10 @@ class Application(object):
         '''
         Helper function for key_manager_window.  This delete the selected
         .key file
+        
+        Returns
+        -------
+        None.
         '''
         
         ii = self.left_pane.curselection()
@@ -829,46 +1006,31 @@ class Application(object):
         '''
         Helper function for key_manager_window.  This creates a new .key file
         for the key typed or generated in the Entry box.
+        
+        Attributes
+        ----------
+        new_key : string
+            The new key that will be added
+        
+        Returns
+        -------
+        None.
         '''
         
         self.new_key = self.key_var.get()
 
-        
-        if all(c in '0123456789abcdefABCDEF' for c in self.new_key):
-                
-            savepath = asksaveasfilename(filetypes=(("KEY File", ['.key']),),
-                                                 initialdir = '', 
-                                                 title = "Save key")
-                
-            if not savepath:
-                return
-    
-            with open(savepath + '.key' , "w") as f:
-                f.write(self.new_key)
-                
-            self.key_manager_window()
+        savepath = asksaveasfilename(filetypes=(("KEY File", ['.key']),),
+                                             initialdir = '', 
+                                             title = "Save key")
             
-        else:
-            
-            popup_window = tk.Toplevel()
-            popup_window.geometry("300x100") 
-            popup_window.wm_title("Key Error")
-            
-            # Background of the popup window
-            bkgd_frame = Frame(popup_window, width=300, height=100)
-            bkgd_frame.pack()
-            
-            # Label that displays the prompt            
-            prompt_txt = "The key can only contain hexidecimal values."
-            prompt = Label(bkgd_frame, text=prompt_txt)
-            prompt.place(x=25, y=20, width=250)
-            
-            # Buttons to save and quit, just quit, and cancel the "quit" 
-            # command
-            button = Button(bkgd_frame, text="Close", 
-                               command=popup_window.destroy)
-            button.place(x=100, y=50, width=100, height=30 )    
+        if not savepath:
+            return
 
+        with open(savepath + '.key' , "w") as f:
+            f.write(self.new_key)
+            
+        self.key_manager_window()
+            
     def one_button_popup(self, title, msg):
         '''
         Display a message pop-up with a close button
@@ -879,7 +1041,10 @@ class Application(object):
             The title bar message (should be  short).
         msg : string
             The detailed message to get displayed.
-
+        
+        Returns
+        -------
+        None.
         '''
         
         popup_window = tk.Toplevel()
@@ -910,9 +1075,13 @@ class Application(object):
         ----------
         new_key : byte string 
            The new random key being generated
+        
+        Returns
+        -------
+        None.
         '''
-        self.new_key = os.urandom(32).hex()
-        self.key_var.set(self.new_key)
+        self.new_key = binascii.hexlify(os.urandom(32))
+        self.key_var.set(self.new_key.decode('utf-8'))
 
     def update_key_dir(self, event):
         '''
@@ -928,6 +1097,10 @@ class Application(object):
         ----------
         key_dir : string 
             This is the path to the key directory.
+        
+        Returns
+        -------
+        None.
         '''
         new_key_dir = self.key_path_var.get()
         
@@ -966,6 +1139,10 @@ class Application(object):
         ----------
         key_dir : string 
            This is the path to the key directory.
+
+        Returns
+        -------
+        None.
         '''
         
         new_key_dir = askdirectory(initialdir = self.key_dir, 
@@ -974,7 +1151,7 @@ class Application(object):
         if new_key_dir:
             self.key_dir = new_key_dir
             self.key_manager_window()
-      
+        
 if __name__ == "__main__":
     Application()                
 
