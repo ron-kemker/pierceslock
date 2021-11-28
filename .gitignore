@@ -118,3 +118,4 @@ dmypy.json
 *.pdf
 *KAT_AES/*
 *dev/*
+.profile
