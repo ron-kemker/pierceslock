@@ -151,9 +151,10 @@ class PasswordManager(object):
                                   command=self.base_app.quit_prompt)
         
         if not self.test_mode:
-        
             toolMenu = Menu(self.menu)
             self.menu.add_cascade(label='Tools', menu=toolMenu)
+            toolMenu.add_command(label='Main Menu', 
+                             command=self.base_app.draw_main)    
             toolMenu.add_command(label='Encrypt File', 
                                  command=self.base_app.encryption_window)
             toolMenu.add_command(label='Decrypt File', 

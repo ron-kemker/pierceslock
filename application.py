@@ -106,6 +106,8 @@ class Application(object):
         
         toolMenu = Menu(self.menu)
         self.menu.add_cascade(label='Tools', menu=toolMenu)
+        toolMenu.add_command(label='Main Menu', 
+                             command=self.draw_main)        
         toolMenu.add_command(label='Encrypt File', 
                              command=self.encryption_window)
         toolMenu.add_command(label='Decrypt File', 
