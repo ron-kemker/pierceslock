@@ -12,7 +12,7 @@ import glob, os, binascii
 import tkinter as tk
 from tkinter import Frame, Button, Label, Menu, Entry, StringVar, Listbox, \
     Scrollbar, ttk
-from tkinter.filedialog import askopenfilename,asksaveasfilename
+from tkinter.filedialog import askopenfilename,asksaveasfilename, askdirectory
 from AESCipher import AESCipher, AuthenticationFailed,DecryptionFailed, \
     UnpaddingError, TTLError
     
@@ -86,8 +86,7 @@ class PasswordManager(object):
         None.
 
         '''
-        
-        
+               
         self.pwm_keys = ["Account Name", "Username", "Password", "URL", 
                          "Notes"]
 
@@ -272,7 +271,7 @@ class PasswordManager(object):
         '''
         
         window_height = 600
-        window_width = 300
+        window_width = 600
         popup_window = tk.Toplevel()
         popup_window.geometry("%dx%d" % (window_width, 
                                         window_height))
@@ -285,13 +284,30 @@ class PasswordManager(object):
         
         label = Label(bkgd_frame, text='Select Encryption Key')
         label.place(x=10, y=0, width=window_width-20, height=30)
+
+        label = Label(bkgd_frame,
+                      text='Key Directory: ')
+        label.place(x=10, y=31, width=100, height=30)
+        
+        self.key_path_var = StringVar()
+        path_pane = Entry(bkgd_frame, 
+                          textvariable=self.key_path_var)
+        self.key_path_var.set(self.base_app.key_dir)
+        path_pane.bind('<Return>', lambda:self.update_key_dir(treev, mode))
+        path_pane.place(x=100, y=31, width=window_width-250, height=30)
+        
+        cmd = lambda:self.change_key_dir(popup_window, treev, mode)
+        button = Button(bkgd_frame,
+                        text='Browse Working Directory',
+                        command=cmd)
+        button.place(x=window_width-150, y=31, width=150, height=30)
         
         self.pane = Listbox(bkgd_frame)
         self.pane.bind('<<ListboxSelect>>', self.select_key)
         
-        self.pane.place(x=10, y=31, 
+        self.pane.place(x=10, y=62, 
                         width=window_width-20, 
-                        height=window_height-100)
+                        height=window_height-130)
     
     
         for i, key_file in enumerate(glob.glob(self.base_app.key_dir + '/*.key')):
@@ -311,12 +327,99 @@ class PasswordManager(object):
         button = Button(bkgd_frame,
                         text='Select',
                         command=cmd)
-        button.place(x=45, y=window_height-60, width=100, height=50)
+        button.place(x=199, y=window_height-60, width=100, height=50)
         
         button = Button(bkgd_frame,
                               text='Cancel',
                               command=popup_window.destroy)
-        button.place(x=155, y=window_height-60, width=100, height=50)        
+        button.place(x=301, y=window_height-60, width=100, height=50)
+        
+    def update_key_dir(self, event, treev, mode):
+        '''
+        Helper function for key_manager_window.  This updates the directory
+        path using the entry box.
+
+        Parameters
+        ----------
+        event : tkinter event object
+            This contains the listener obj for the key manager's key_path_var
+        treev : tkinter Treeview object
+            This contains the database for display purposes.
+        mode : string
+            To save space, this conditional is to gate the save or load
+            functions.
+            
+        Attributes
+        ----------
+        key_dir : string 
+            This is the path to the key directory.
+                
+        Returns
+        -------
+        None.
+        '''
+        new_key_dir = self.key_path_var.get()
+        
+        if os.path.exists(new_key_dir):
+            self.base_app.key_dir = new_key_dir
+            self.key_prompt_window(treev, mode)  
+        else:
+            
+            popup_window = tk.Toplevel()
+            popup_window.geometry("300x100") 
+            popup_window.wm_title("Invalid Path")
+            
+            # Background of the popup window
+            bkgd_frame = Frame(popup_window, width=300, height=100)
+            bkgd_frame.pack()
+            
+            # Label that displays the prompt            
+            prompt_txt = "This path does not exist."
+            prompt = Label(bkgd_frame, text=prompt_txt)
+            prompt.place(x=25, y=20, width=250)
+            
+            # Buttons to save and quit, just quit, and cancel the "quit" 
+            # command
+            button = Button(bkgd_frame, text="Close", 
+                               command=popup_window.destroy)
+            button.place(x=100, y=50, width=100, height=30 )
+            
+            self.key_prompt_window(treev, mode)  
+
+    def change_key_dir(self, popup_window, treev, mode):
+        '''
+        Helper function for key_manager_window.  This opens a browse window 
+        to select a new key directory to display.
+        
+        Parameters
+        ----------
+        treev : tkinter Treeview object
+            This contains the database for display purposes.
+        mode : string
+            To save space, this conditional is to gate the save or load
+            functions.
+                
+        Attributes
+        ----------
+        key_dir : string 
+           This is the path to the key directory.
+
+        Returns
+        -------
+        None.
+        '''
+        
+        popup_window.destroy()
+        new_key_dir = askdirectory(initialdir = self.base_app.key_dir, 
+                                    title = "Change Key Directory")
+        
+        if new_key_dir:
+            self.base_app.key_dir = new_key_dir.replace('/', '\\')
+            
+            # with open('.profile', 'w') as f:
+            #     f.write('key_dir '+self.base_app.key_dir)
+                
+            self.key_prompt_window(treev, mode)
 
     def select_key(self, event):
         '''
