@@ -54,6 +54,17 @@ class Application(object):
         self.key_dir = os.path.abspath('keys')
         self.version = "0.1.4"
         self.last_update = '21 Nov 2021'
+
+        if os.path.exists('.profile'):
+            with open('.profile' , 'r') as f:
+                self.key_dir = f.read().split(" ", 1)[-1]
+            
+            if not os.path.exists(self.key_dir):
+                self.key_dir = os.path.abspath('keys')
+                
+        else:
+            with open('.profile', 'w') as f:
+                f.write('key_dir '+ self.key_dir)
                 
         # Initialize Window
         self.window = tk.Tk()
@@ -67,7 +78,7 @@ class Application(object):
         
         # Run the application till closed
         self.window.mainloop()
-
+        
     def draw_menu(self):
         '''
         Draws the main menu (default view)
@@ -91,7 +102,6 @@ class Application(object):
         
         fileMenu = Menu(self.menu)
         self.menu.add_cascade(label='File', menu=fileMenu)
-                   
         fileMenu.add_command(label='Quit', command=self.quit_prompt)
         
         toolMenu = Menu(self.menu)
@@ -1150,8 +1160,12 @@ class Application(object):
         
         if new_key_dir:
             self.key_dir = new_key_dir.replace('/', '\\')
+            
+            with open('.profile', 'w') as f:
+                f.write('key_dir '+self.key_dir)
+                
             self.key_manager_window()
-        
+
 if __name__ == "__main__":
     Application()                
 
