@@ -879,7 +879,7 @@ class Application(object):
                         height=self.window_height)
 
 
-        for i, key_file in enumerate(glob.glob(self.key_dir + '/*.key')):
+        for i, key_file in enumerate(glob.glob(self.key_dir + '\\*.key')):
             self.left_pane.insert(i, key_file.split('\\')[-1][:-4])
         
         scrollbar = Scrollbar(self.left_pane)
@@ -1149,7 +1149,7 @@ class Application(object):
                                     title = "Change Key Directory")
         
         if new_key_dir:
-            self.key_dir = new_key_dir
+            self.key_dir = new_key_dir.replace('/', '\\')
             self.key_manager_window()
         
 if __name__ == "__main__":
