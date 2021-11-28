@@ -12,7 +12,7 @@ Description: This is the main GUI application for the "Pierce's Lock"
 import glob, binascii, os
 import tkinter as tk
 from tkinter import Frame, Button, Label, Menu, Entry, StringVar, Listbox, \
-    Scrollbar, ttk
+    Scrollbar
 from tkinter.filedialog import askopenfilename,asksaveasfilename,askdirectory
 from PIL import ImageTk, Image
 
