@@ -16,7 +16,7 @@ from tkinter import Frame, Button, Label, Menu, Entry, StringVar, Listbox, \
 from tkinter.filedialog import askopenfilename,asksaveasfilename,askdirectory
 from PIL import ImageTk, Image
 
-from AESCipher import AESCipher,InvalidToken,AuthenticationFailed,\
+from AESCipher import AESCipher, AuthenticationFailed,\
     DecryptionFailed, UnpaddingError, TTLError
 
 from password_manager import PasswordManager
