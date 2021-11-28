@@ -132,7 +132,6 @@ class PasswordManager(object):
         
         fileMenu = Menu(self.menu)
         self.menu.add_cascade(label='File', menu=fileMenu)
-       
             
         fileMenu.add_command(label='New Password File', 
                                   command=self.password_manager_window)
@@ -145,9 +144,6 @@ class PasswordManager(object):
         fileMenu.add_command(label='Save Password File', 
                                   command=cmd)
         
-        fileMenu.add_command(label='Export as Plaintext CSV', 
-                                  command=None)
-
         fileMenu.add_command(label='Close Password File', 
                                   command=self.password_manager_window)
             
