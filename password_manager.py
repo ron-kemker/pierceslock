@@ -54,6 +54,40 @@ class BaseApp(object):
         cancel_button = Button(bkgd_frame, text="Cancel", 
                                command=popup_window.destroy)
         cancel_button.place(x=151, y=50, width=100, height=30)
+
+    def one_button_popup(self, title, msg):
+        '''
+        Display a message pop-up with a close button
+
+        Parameters
+        ----------
+        title : string
+            The title bar message (should be  short).
+        msg : string
+            The detailed message to get displayed.
+        
+        Returns
+        -------
+        None.
+        '''
+        
+        popup_window = tk.Toplevel()
+        popup_window.geometry("300x100") 
+        popup_window.wm_title(title)
+        
+        # Background of the popup window
+        bkgd_frame = Frame(popup_window, width=300, height=100)
+        bkgd_frame.pack()
+        
+        # Label that displays the prompt            
+        prompt = Label(bkgd_frame, text=msg)
+        prompt.place(x=25, y=20, width=250)
+        
+        # Buttons to save and quit, just quit, and cancel the "quit" 
+        # command
+        button = Button(bkgd_frame, text="Close", 
+                           command=popup_window.destroy)
+        button.place(x=100, y=50, width=100, height=30 ) 
         
 class PasswordManager(object):
     def __init__(self, base_app=None):
@@ -84,6 +118,10 @@ class PasswordManager(object):
         Returns
         -------
         None.
+        
+        TODO: Hide the Password by default
+        TODO: Add sort capability
+        TODO: Check if saved before quit        
 
         '''
                
@@ -562,22 +600,22 @@ class PasswordManager(object):
             try:
                 ciphertext, iv = cipher.authenticate(ciphertext, signing_key)
             except TTLError:
-                self.one_button_popup("TTL Failure",
+                self.base_app.one_button_popup("TTL Failure",
                             "The message's time-to-live (TTL) has expired.")
                 return
             except AuthenticationFailed:
-                self.one_button_popup("Authentication Failed",
+                self.base_app.one_button_popup("Authentication Failed",
                                       "Message Authentication has Failed")                
                 return
             
             try:
                 deciphertext = cipher.decrypt(ciphertext, key, iv)
             except DecryptionFailed:
-                self.one_button_popup("Decryption Failed",
+                self.base_app.one_button_popup("Decryption Failed",
                                       "Message Decryption has Failed")                
                 return                
             except UnpaddingError:
-                self.one_button_popup("Unpadding Failed",
+                self.base_app.one_button_popup("Unpadding Failed",
                             "Message unpadding after decryption has failed.")                
                 return                       
         
